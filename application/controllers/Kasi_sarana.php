@@ -2140,10 +2140,12 @@ class Kasi_sarana extends CI_Controller {
 
         $no = ($length == -1) ? 1 : $start+1 ;
         $perInput = $this->admin_model->get('periode_input', 'master_state', 2, [['tipe', 'input']]);
-        $jumJenisApd = $this->_get_jml_jenis_apd();
+        //$jumJenisApd = $this->_get_jml_jenis_apd();
         $data = array();
         foreach($listUser as $user)
         {
+            $num_ukuran = $this->admin_model->get('id', 'users_ukuran', 3, [['users_id',$user['user_id'] ]]);
+            $ukuran = ($num_ukuran > 0) ? '<span class="fs-3 text-success">&#9745;</span>' : '<span class="fs-3 text-danger">&#9746;</span>' ;
             $data[]= array(
                 '<a href="'.base_url().'kasi_sarana/dataUserDetail/'.$user['user_id'].'" class="btn btn-primary btn-sm" role="button"><i class="fas fa-external-link-alt text-white loader-animation"></i></a>',
                 $no,
@@ -2155,7 +2157,8 @@ class Kasi_sarana extends CI_Controller {
 				$user['nama_pos'],
                 $user['persen_inputAPD'],
                 $user['persen_APDterverif'],
-                $user['jml_ditolak']
+                $user['jml_ditolak'],
+                $ukuran
             );
             $no++; 
 		}
@@ -2206,12 +2209,13 @@ class Kasi_sarana extends CI_Controller {
         }*/
         $UserID = $this->authenticationDetailUser($UserID);
 
+        $ukuran = 'users_ukuran.uk_kaos, users_ukuran.uk_baju_dinas, users_ukuran.uk_celana_dinas, users_ukuran.uk_sepatu_dinas, users_ukuran.ukuran_baret, users_ukuran.uk_fire_jaket, users_ukuran.uk_sepatu_rescue_boots, users_ukuran.ukuran_sepatu_fire_boots, users_ukuran.uk_gloves, users_ukuran.uk_jumpsuit';
         $joinArr = [['users', 'master_pos', 'master_pos.nama_pos', 'kode_pos_id', 'id_mp' ], 
                     ['users', 'master_status', 'master_status.status', 'status_id', 'id_stat' ], 
-                    ['users', 'master_jabatan', 'master_jabatan.nama_jabatan', 'jabatan_id', 'id_mj' ] ];
-        $select =   'id, nama, photo, NIP, NRK, users.no_telepon, email, tgl_lahir, berat_badan, tinggi_badan, uk_baret, uk_kaos, uk_baju, uk_celana, uk_jaket, uk_sepatu, uk_gloves,
-                    persen_inputAPD, persen_APDterverif, users.jml_ditolak';
-        $userData = $this->admin_model->get($select, 'users', 2, [['active', 1], ['id', $UserID]], null, $joinArr );
+                    ['users', 'master_jabatan', 'master_jabatan.nama_jabatan', 'jabatan_id', 'id_mj' ],
+                    ['users', 'users_ukuran', $ukuran, 'id', 'users_id' ]];
+        $select =   'users.id, nama, photo, NIP, NRK, users.no_telepon, email, persen_inputAPD, persen_APDterverif, users.jml_ditolak';
+        $userData = $this->admin_model->get($select, 'users', 2, [['active', 1], ['users.id', $UserID]], null, $joinArr );
         $this->data['userData'] = $userData;
 
         /*$list_jenisAPD = $this->_get_list_jenis_apd('id_mj, jenis_apd');
@@ -2241,6 +2245,19 @@ class Kasi_sarana extends CI_Controller {
         $this->data['dataAPD'] = $dataAPD;*/
         $this->data['UserID'] = $UserID;
 
+        //get role_id user
+        $joinArr2 = [['users', 'master_jabatan', 'master_jabatan.mc_id', 'jabatan_id', 'id_mj' ], 
+        ['master_jabatan', 'master_controller', 'master_controller.role_id', 'mc_id', 'id' ] ];
+        $role_id_arr = $this->admin_model->get('users.id', 'users', 2, [['users.id', $UserID]], null, $joinArr2);
+        $user_role_id = $role_id_arr['role_id'];
+
+        $list_apd = ['uk_kaos', 'uk_baju_dinas', 'uk_celana_dinas', 'uk_sepatu_dinas', 'ukuran_baret', 'uk_fire_jaket', 'uk_sepatu_rescue_boots', 'ukuran_sepatu_fire_boots', 'uk_gloves', 'uk_jumpsuit'];
+        if ($user_role_id > 2) {
+            $list_apd = ['uk_kaos', 'uk_baju_dinas', 'uk_celana_dinas', 'uk_sepatu_dinas', 'ukuran_baret', 'uk_fire_jaket', 'uk_sepatu_rescue_boots'];
+        }
+
+        $this->data['list_apd'] = $list_apd;
+        $this->data['list_label'] = ['Ukuran Kaos', 'Ukuran Baju PDH/PDL/Olah Raga', 'Ukuran Celana PDH/PDL/Olah Raga', 'Ukuran Sepatu PDH/PDL/Olah Raga', 'Ukuran Baret', 'Ukuran Fire Jacket', 'Ukuran Sepatu Rescue Boots', 'Ukuran Sepatu Fire Boots', 'Ukuran Gloves', 'Ukuran Jumpsuit'];
 
         $active = $this->active;
 		$active['dataMenu'] = 'active-page';

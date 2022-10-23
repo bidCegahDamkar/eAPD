@@ -62,6 +62,7 @@
                           <th>% input APD</th>
                           <th>% APD terverifikasi</th>
                           <th>Jumlah APD tertolak</th>
+                          <th>Input Ukuran</th>
                         </tr>
                     </thead>
                     <tbody>

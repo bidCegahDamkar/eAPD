@@ -12,7 +12,7 @@
                             <img src="<?php echo $foto; ?>" alt="">
                         </div>
                         <div class="profile-name">
-                            <h3><? echo $userData['nama']; ?></h3>
+                            <h3><?php echo $userData['nama']; ?></h3>
                         </div>
                     </div>
                 </div>
