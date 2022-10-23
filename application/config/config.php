@@ -24,7 +24,7 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 |
 */
 //development
-$config['base_url'] = 'http://localhost/eAPD/';
+$config['base_url'] = 'http://localhost/eapd/';
 //production
 //$config['base_url'] = 'https://eapd.damkardki.com/';
 

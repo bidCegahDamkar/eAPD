@@ -1,5 +1,4 @@
 <?php defined('BASEPATH') OR exit('No direct script access allowed');
-
 /**
  * Class Auth
  * @property Ion_auth|Ion_auth_model $ion_auth        The ION Auth spark
@@ -21,6 +20,7 @@ class Auth extends CI_Controller
 		$this->form_validation->set_error_delimiters($this->config->item('error_start_delimiter', 'ion_auth'), $this->config->item('error_end_delimiter', 'ion_auth'));
 
 		$this->lang->load('auth');
+		
 	}
 
 	/*public function index()
@@ -89,7 +89,6 @@ class Auth extends CI_Controller
 	public function login()
 	{
 		$this->data['title'] = $this->lang->line('login_heading');
-
 		// validate form input
 		$this->form_validation->set_rules('identity', str_replace(':', '', $this->lang->line('login_identity_label')), 'required');
 		$this->form_validation->set_rules('password', str_replace(':', '', $this->lang->line('login_password_label')), 'required');
@@ -113,8 +112,7 @@ class Auth extends CI_Controller
 				$this->session->set_flashdata('message', $this->ion_auth->errors());
 				redirect('auth/login', 'refresh'); // use redirects instead of loading views for compatibility with MY_Controller libraries
 			}
-		}
-		else
+		}else
 		{
 			//user already login but press back so we need to direct them back at home page
 			if ($this->ion_auth->logged_in())
@@ -921,5 +919,11 @@ class Auth extends CI_Controller
 			return $view_html;
 		}
 	}
+
+	public function csrf_redirect()
+	{
+		$this->logout();
+	}
+	
 
 }
