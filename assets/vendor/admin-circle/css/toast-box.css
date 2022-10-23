@@ -1,0 +1,90 @@
+.toast-box .toast-title {
+    font-size: 15px;
+    color: #FFF;
+  }
+  
+  .toast-box .btn {
+    font-size: 13px;
+    font-weight: 500;
+  }
+  
+  .toast-box.show {
+    top: 0;
+  }
+  
+  .toast-box .in {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    padding-right: 20px;
+  }
+  
+  .toast-box .in i.icon,
+  .toast-box .in ion-icon {
+    font-size: 24px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    margin-right: 8px;
+    color: #FFF;
+  }
+  
+  .toast-box .in .text {
+    width: 100%;
+  }
+  
+  .toast-box.toast-top.show {
+    top: 56px;
+  }
+  
+  .toast-box.toast-bottom {
+    top: auto;
+    bottom: -100%;
+  }
+  
+  .toast-box.toast-bottom.show {
+    bottom: 56px;
+    top: auto;
+    margin-bottom: env(safe-area-inset-bottom);
+  }
+  
+  .toast-box.toast-center {
+    width: auto;
+    left: auto;
+    right: auto;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    display: none;
+    padding: 16px 24px;
+    border-radius: 6px;
+    text-align: center;
+  }
+  
+  .toast-box.toast-center.show {
+    display: block;
+    transform: translate(-50%, -50%);
+  }
+  
+  .toast-box.toast-center .in {
+    padding: 0;
+    display: block;
+  }
+  
+  .toast-box.toast-center .in i.icon,
+  .toast-box.toast-center .in ion-icon {
+    margin: 0 0 10px 0;
+    font-size: 64px;
+    width: 64px;
+    height: 64px;
+  }
+  
+  .toast-box.toast-center .btn {
+    margin-top: 20px;
+  }
+  
+  .extra-header-active .toast-box.toast-top.show {
+    top: 95px;
+  }

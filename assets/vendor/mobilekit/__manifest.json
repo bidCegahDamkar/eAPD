@@ -1,0 +1,10 @@
+{
+    "name": "eAPD",
+    "short_name": "eAPD",
+    "start_url": "http://localhost/eapd-ci/",
+    "display": "standalone",
+    "scope" : "/",
+    "background_color": "#000000",
+    "theme_color": "#000000",
+    "orientation": "portrait"
+}
