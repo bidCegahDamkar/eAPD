@@ -62,29 +62,10 @@
                           <th>% input APD</th>
                           <th>% APD terverifikasi</th>
                           <th>Jumlah APD tertolak</th>
+                          <th>Input Ukuran</th>
                         </tr>
                     </thead>
                     <tbody>
-                      <?php
-                      /*$i = 1;
-                      foreach ($listUser as $user) {
-                        echo '
-                        <tr>
-                          <td><a href="'.base_url().'kasi_sarana/dataUserDetail/'.$user['id'].'" class="btn btn-primary btn-sm" role="button"><i data-feather="arrow-up-right"></i></a></td>
-                          <td>'.$i.'</td>
-                          <td>'.$user['nama'].'</td>
-                          <td>'.$user['NRK'].'/ '.$user['NIP'].'</td>
-                          <td>'.$user['nama_jabatan'].'</td>
-                          <td>'.$user['sektor'].'</td>
-                          <td>'.$user['nama_pos'].'</td>
-                          <td>'.$user['persen_inputAPD'].' %</td>
-                          <td>'.$user['persen_APDterverif'].' %</td>
-                          <td>'.$user['jml_ditolak'].'</td>
-                        </tr>
-                        ';
-                        $i++;
-                      }*/
-                      ?>
                     </tbody>
                   </table>
                 </div>

@@ -1,6 +1,6 @@
     <div class="page-content">
         <div class="main-wrapper">
-            <? //d($dataAPD); ?>
+            <? //d($userData); ?>
             <?php
             $foto = (is_null($userData['photo'])) ? base_url().'assets/img/default-red.png' : base_url().'upload/petugas/profil/'.$userData['photo'] ;
             ?> 
@@ -18,7 +18,7 @@
                 </div>
             </div>
             <div class="row">
-                <div class="col-md-12 col-lg-3">
+                <div class="col-md-12 col-lg-4">
                     <div class="card">
                         <div class="card-body">
                             <h5 class="card-title">Progress Input APD</h5>
@@ -38,7 +38,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="col-md-12 col-lg-6">
+                <div class="col-md-12 col-lg-8">
                     <div class="card">
                         <div class="card-body">
                             <h5 class="card-title">Biodata</h5>
@@ -54,22 +54,24 @@
                         </div>
                     </div>
                 </div>
-                <div class="col-md-12 col-lg-3">
+                <div class="col-md-12 col-lg-12">
                     <div class="card">
                         <div class="card-body">
-                            <h5 class="card-title">Data Fisik</h5>
-                            <ul class="list-unstyled profile-about-list">
-                                <li><span>Tanggal Lahir : <? myPrint($userData['tgl_lahir']); ?></span></li>
-                                <li><span>Tinggi Badan: <? myPrint($userData['tinggi_badan']); ?> cm</span></li>
-                                <li><span>Berat Badan: <? myPrint($userData['berat_badan']); ?> kg</span></li>
-                                <li><span>Ukuran Baret: <? myPrint($userData['uk_baret']); ?></span></li>
-                                <li><span>Ukuran Kaos: <? myPrint($userData['uk_kaos']); ?></span></li>
-                                <li><span>Ukuran Baju: <? myPrint($userData['uk_baju']); ?></span></li>
-                                <li><span>Ukuran Jaket: <? myPrint($userData['uk_jaket']); ?></span></li>
-                                <li><span>Ukuran Gloves: <? myPrint($userData['uk_gloves']); ?></span></li>
-                                <li><span>Ukuran Celana: <? myPrint($userData['uk_celana']); ?></span></li>
-                                <li><span>Ukuran Sepatu: <? myPrint($userData['uk_sepatu']); ?></span></li>
-                            </ul>
+                            <h5 class="card-title">Data Ukuran</h5>
+                            <div class="row">
+                                <?php
+                                for ($i=0; $i < count($list_apd); $i++) { 
+                                    echo '
+                                    <div class="col-6">
+                                        <span class="row">
+                                            <div class="col-4">'.$list_label[$i].'</div>
+                                            <div class="col-8">: '.$userData[$list_apd[$i] ].'</div>
+                                        </span>
+                                    </div>
+                                    ';
+                                }
+                                ?>
+                            </div>
                         </div>
                     </div>
                 </div>

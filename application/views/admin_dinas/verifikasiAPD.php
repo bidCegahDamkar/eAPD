@@ -1,6 +1,6 @@
 <div class="page-content">
     <div class="main-wrapper">
-        <? //d($controller); ?>
+        <? //d($listAPD); ?>
     <div class="row">
         <div class="card mb-2 bg-primary">
             <div class="card-body text-white">
