@@ -2,10 +2,10 @@
 defined('BASEPATH') OR exit('No direct script access allowed');
 
 $config['id'] = 'kabid_sapras';
-$config['mcID_list_monitoring'] = [19,18,27,28,29,16,17,22,23,24,25,32,15,14,13,12,11,10,9,8,7,6, 31];
+$config['mcID_list_monitoring'] = [19,18,27,28,29,16,17,22,23,24,30,25,32,15,14,13,12,11,10,9,8,7,6,31];
 $config['jabID_list_monitoring'] = [107, 102, 101, 104];
-$config['verifikasi_list'] = [10, 11];
-$config['list_jab_pns'] = [19,18,27,28,29,16,17,22,23,24,25,32,15,14,13,12,11,10,9,8,7,6, 31];
+$config['verifikasi_list'] = [19,18,27,28,29,16,17,22,23,24,32,13,14,31];
+$config['list_jab_pns'] = [19,18,27,28,29,16,17,22,23,24,30,25,32,15,14,13,12,11,10,9,8,7,6,31];
 $config['list_jab_nonpns'] = [9, 8, 7, 6];
 $config['list_user_setting'] = [15, 22, 23, 30, 13, 11, 10, 21, 9, 8, 7, 6, 26];
 $config['report_apd'] = [15, 22, 23, 30, 13, 11, 10, 21, 9, 8, 7, 6];

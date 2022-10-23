@@ -6,19 +6,19 @@ class Kasi_sarana extends CI_Controller {
     public $active = array(
         'homeMenu' => '',
         'verifikasiMenu' => '',
-        'verifikasi' => '',
-        'sewaktu' => '',
+            'verifikasi' => '',
+            'sewaktu' => '',
         'dataMenu' => '',
-        'apdTerverifikasi' => '',
-        'apdTertolak' => '',
-        'dataUser' => '',
+            'apdTerverifikasi' => '',
+            'apdTertolak' => '',
+            'dataUser' => '',
         'laporanMenu' => '',
-        'rekap' => '',
-        'detail' => '',
-        'pdf' => '',
+            'rekap' => '',
+            'detail' => '',
+            'pdf' => '',
         'setting' => '',
-        'user_setting' => '',
-        'plt_setting' => ''
+            'user_setting' => '',
+            'plt_setting' => ''
     );
 
     public function __construct()

@@ -183,18 +183,18 @@ defined('BASEPATH') OR exit('No direct script access allowed');
             <li class="<? echo $active['homeMenu']; ?>">
               <a href="<?php echo base_url().$controller; ?>/home"><i data-feather="home"></i>Dashboard</a>
             </li>
-            <!--<li class="<? //echo $active['verifikasiMenu']; ?>">
+            <li class="<? echo $active['verifikasiMenu']; ?>">
               <a href="#"><i data-feather="inbox"></i>Verifikasi & Validasi<i class="fas fa-chevron-right dropdown-icon"></i></a>
               <ul>
-                <li ><a class="<? //echo $active['verifikasi']; ?>" href="<?php //echo base_url().$controller; ?>/verifikasi"><i class="far fa-circle"></i>Verifikasi APD</a></li>
-                <li><a class="<? //echo $active['sewaktu']; ?>" href="<?php //echo base_url().$controller; ?>/home"><i class="far fa-circle"></i>Laporan Sewaktu-waktu</a></li> 
+                <li ><a class="<? echo $active['verifikasi']; ?>" href="<?php echo base_url().$controller; ?>/verifikasi"><i class="far fa-circle"></i>Verifikasi APD</a></li>
+                <!-- <li><a class="<? //echo $active['sewaktu']; ?>" href="<?php //echo base_url().$controller; ?>/home"><i class="far fa-circle"></i>Laporan Sewaktu-waktu</a></li> -->
               </ul>
-            </li> -->
+            </li>
             <li class="<? echo $active['dataMenu']; ?>">
               <a href="#"><i data-feather="user"></i>Data APD<i class="fas fa-chevron-right dropdown-icon"></i></a>
               <ul>
-                <!-- <li><a class="<? //echo $active['apdTerverifikasi']; ?>" href="<?php //echo base_url().$controller; ?>/tervalidasi"><i class="far fa-circle"></i>APD Terverifikasi</a></li>
-                <li><a class="<? //echo $active['apdTertolak']; ?>" href="<?php //echo base_url().$controller; ?>/ditolak"><i class="far fa-circle"></i>APD Tertolak</a></li> -->
+                <li><a class="<? echo $active['apdTerverifikasi']; ?>" href="<?php echo base_url().$controller; ?>/tervalidasi"><i class="far fa-circle"></i>APD Terverifikasi</a></li>
+                <li><a class="<? echo $active['apdTertolak']; ?>" href="<?php echo base_url().$controller; ?>/ditolak"><i class="far fa-circle"></i>APD Tertolak</a></li>
                 <li><a class="<? echo $active['dataUser']; ?>" href="<?php echo base_url().$controller; ?>/dataUser"><i class="far fa-circle"></i>Data APD Pegawai</a></li>
               </ul>
             </li>

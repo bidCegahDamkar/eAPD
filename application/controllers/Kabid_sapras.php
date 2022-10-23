@@ -216,6 +216,39 @@ class Kabid_sapras extends CI_Controller {
         return $result;
     }
 
+    private function _update_user_rekap($UserID=null)
+    {
+        //update data users.persen input apd
+        //$UserID = $this->data['user_id'];
+        if (! is_null($UserID) && ! empty($UserID)) {
+            $jml_belum_verif = $this->_get_apds('id', 3, [['petugas_id', $UserID], ['progress', 2]]);
+            $jml_terverif = $this->_get_apds('id', 3, [['petugas_id', $UserID], ['progress', 3]]);
+            $jml_ditolak = $this->_get_apds('id', 3, [['petugas_id', $UserID], ['progress', 1]]);
+            /*$jml_belum_verif = $this->admin_model->get('id', 'apd', 3, [['petugas_id', $UserID], ['progress', 2], ['apd.mj_id !=', 0], ['periode_input', $perInput['periode_input'] ] ]);
+            $jml_terverif = $this->admin_model->get('id', 'apd', 3, [['petugas_id', $UserID], ['progress', 3], ['apd.mj_id !=', 0], ['periode_input', $perInput['periode_input'] ] ]);
+            $jml_ditolak = $this->admin_model->get('id', 'apd', 3, [['petugas_id', $UserID], ['progress', 1], ['apd.mj_id !=', 0], ['periode_input', $perInput['periode_input'] ] ]);*/
+
+            //get role_id user
+            $joinArr2 = [['users', 'master_jabatan', 'master_jabatan.mc_id', 'jabatan_id', 'id_mj' ], 
+                    ['master_jabatan', 'master_controller', 'master_controller.role_id', 'mc_id', 'id' ] ];
+            $role_id_arr = $this->admin_model->get('users.id', 'users', 2, [['users.id', $UserID]], null, $joinArr2);
+            $user_role_id = $role_id_arr['role_id'];
+            $jumJenisApd = $this->_get_jml_jenis_apd(null, $user_role_id);
+            $jml_input = $jml_belum_verif+$jml_terverif+$jml_ditolak;
+            $persen_input = round( ($jml_input/$jumJenisApd)*100, 1);
+            $persen_tervalidasi = round( ($jml_terverif/$jumJenisApd)*100, 1);
+            $data_user = array( 'persen_inputAPD' => $persen_input,
+                                'persen_APDterverif' => $persen_tervalidasi,
+                                'jml_ditolak' => $jml_ditolak,
+                                'jml_input_APD' => $jml_input,
+                                'jml_tobe_verified' => $jml_belum_verif
+                            );
+            return $this->admin_model->updateData('users', ['id', $UserID], $data_user);
+        } else {
+            return false;
+        }
+    }
+
     /**
     * Manage uploadImage
     * @return Response
@@ -679,6 +712,7 @@ class Kabid_sapras extends CI_Controller {
 		$this->load->view('admin_dinas/includes/template', $this->data);
     }
 
+    // belum selesai
     public function profile()
     {
         //$this->data['segmen'] = $this->uri->segment(3);
@@ -809,6 +843,7 @@ class Kabid_sapras extends CI_Controller {
         //$this->load->view('petugas/profile', $this->data);
     }
 
+    // belum selesai
     private function list_lapor_sewaktu()
     {
         //get who is the admin
@@ -824,6 +859,7 @@ class Kabid_sapras extends CI_Controller {
 		$this->load->view('petugas/includes/template', $this->data);
     }
 
+    // belum selesai
     private function lapor_sewaktu_detail()
     {
         $id_lap = $this->uri->segment(3);
@@ -845,6 +881,7 @@ class Kabid_sapras extends CI_Controller {
 		$this->load->view('petugas/includes/template', $this->data);
     }
 
+    // belum selesai
     private function lapor_sewaktu()
     {
         //get who is the admin
@@ -1043,7 +1080,7 @@ class Kabid_sapras extends CI_Controller {
         //$this->load->view('petugas/lapor_sewaktu', $this->data);
     }
 
-    private function verifikasi()
+    public function verifikasi()
     {
         $this->authenticate();
         $this->data['active'] = array( 'active', '', '', '', '', '', '');
@@ -1057,10 +1094,10 @@ class Kabid_sapras extends CI_Controller {
         ['users', 'master_jabatan', 'master_jabatan.nama_jabatan', 'jabatan_id', 'id_mj' ] ];*/
         $joinTable = ['master_status', 'master_jabatan'];
         $select = 'id, nama, NRK, NIP, photo';
-        $listUser = $this->_get_users($select, 1, null, [['master_pos.kode_pos', $this->data['kode_pos'], 'after']], $or_where_arr, null, $joinTable);
+        $listUser = $this->_get_users($select, 1, [['jml_tobe_verified >', 0]], [['master_pos.kode_wilayah', '0.', 'after']], $or_where_arr, null, $joinTable);
         /*$listUser = $this->admin_model->get('id, nama, NRK, NIP, photo', 'users', 1, [['active', 1]], [['master_pos.kode_pos', $this->data['kode_pos'], 'after']], $joinArr,
                                             null, null, $or_where_arr);*/
-        $ApdUser = [];
+        /*$ApdUser = [];
         $i = 0;
         foreach ($listUser as $user) {
             $numAPD = $this->_get_apds('id', 3, [['petugas_id', $user['id']], ['progress', 2] ]);
@@ -1073,7 +1110,7 @@ class Kabid_sapras extends CI_Controller {
                 //$ApdUser[$i]['jmlJenisAPD'] = $jumJenisApd;
                 $i++;
             }
-        }
+        }*/
         /*$listUser = $this->admin_model->get('id, nama, kode_pos', 'users', 1, [['active', 1]] );
         $temp = [];
         foreach ($listUser as $user) {
@@ -1091,16 +1128,16 @@ class Kabid_sapras extends CI_Controller {
 
         $this->data['datatable'] = true;
 
-        $this->data['ApdUser'] = $ApdUser;
+        $this->data['ApdUser'] = $listUser;
         $this->data['url2'] = 'verifikasiAPD';
         $this->data['action'] = 'Verif';
 
         $this->data['pageTitle'] = 'Verifkasi & Validasi';
-        $this->data['main_content'] = 'admin_sudin/list_verifikasi';
-		$this->load->view('admin_sudin/includes/template', $this->data);
+        $this->data['main_content'] = 'admin_dinas/list_verifikasi';
+		$this->load->view('admin_dinas/includes/template', $this->data);
     }
 
-    private function verifikasiAPD()
+    public function verifikasiAPD()
     {
         $this->authenticate();
         $this->load->helper('date');
@@ -1112,15 +1149,21 @@ class Kabid_sapras extends CI_Controller {
         /*$joinArr = [['users', 'master_pos', 'master_pos.nama_pos, master_pos.kode_pos', 'kode_pos_id', 'id_mp' ], ['users', 'master_status', 'master_status.status', 'status_id', 'id_stat' ], 
                     ['users', 'master_jabatan', 'master_jabatan.nama_jabatan', 'jabatan_id', 'id_mj' ] ];*/
         $joinTable = ['master_jabatan', 'master_status'];
-        $userData = $this->_get_users('id, nama, NRK, NIP, master_pos.kode_pos', 2, [['id', $UserID]], null, null, null, $joinTable);
+        $userData = $this->_get_users('id, nama, NRK, NIP, master_pos.kode_wilayah', 2, [['id', $UserID]], null, null, null, $joinTable);
         //$userData = $this->admin_model->get('id, nama, NRK, NIP', 'users', 2, [['active', 1], ['id', $UserID]], null,  $joinArr);
         if (is_array($userData)) {
-            if( (strpos($userData['kode_pos'], $this->data['kode_pos'])) === false || $userData['NRK'] == $this->data['nrk']){
+            if( (strpos($userData['kode_wilayah'], '0.')) === false ){
                 redirect("my404");
             }
         }
         $UserID = $userData['id'];
-        $jumJenisApd = $this->_get_jml_jenis_apd();
+        //get role_id user
+        $joinArr2 = [['users', 'master_jabatan', 'master_jabatan.mc_id', 'jabatan_id', 'id_mj' ], 
+                        ['master_jabatan', 'master_controller', 'master_controller.role_id', 'mc_id', 'id' ] ];
+        $role_id_arr = $this->admin_model->get('users.id', 'users', 2, [['users.id', $UserID]], null, $joinArr2);
+        $user_role_id = $role_id_arr['role_id'];
+
+        $jumJenisApd = $this->_get_jml_jenis_apd(null, $user_role_id);
 
         if ($this->input->server('REQUEST_METHOD') === 'POST')
   		{
@@ -1128,7 +1171,7 @@ class Kabid_sapras extends CI_Controller {
             $this->form_validation->set_rules('verifikasi', 'verifikasi', 'required');
             if ( $this->form_validation->run() )
             {
-                $id = $this->input->post('apd_id');
+                $apd_id = $this->input->post('apd_id');
                 $progress = ($this->input->post('verifikasi') == 1) ? 3 : 1 ;
                 $my_time = date("Y-m-d H:i:s", now('Asia/Jakarta'));
                 $data = array('admin_message' => $this->input->post('pesan'),
@@ -1139,26 +1182,28 @@ class Kabid_sapras extends CI_Controller {
                 if ($progress == 1) {
                     $data['is_read'] = 0;
                 }
-                if($this->admin_model->updateData('apd', ['id', $id], $data))
+                if($this->admin_model->updateData('apd', ['id', $apd_id], $data))
                 {
                     $this->session->set_flashdata('flash_message', 'sukses');
+                    $update_rekap = true;
                 }else{
                     $this->session->set_flashdata('flash_message', 'gagal');
+                    $update_rekap = false;
                 }
                 //update data users.persen input apd
-                $jml_belum_verif = $this->_get_apds('id', 3, [['petugas_id', $UserID], ['progress', 2]]);
+                if ($update_rekap) {
+                    $this->_update_user_rekap($UserID);
+                }
+                /*$jml_belum_verif = $this->_get_apds('id', 3, [['petugas_id', $UserID], ['progress', 2]]);
                 $jml_terverif = $this->_get_apds('id', 3, [['petugas_id', $UserID], ['progress', 3]]);
                 $jml_ditolak = $this->_get_apds('id', 3, [['petugas_id', $UserID], ['progress', 1]]);
-                /*$jml_belum_verif = $this->admin_model->get('id', 'apd', 3, [['petugas_id', $UserID], ['progress', 2], ['apd.mj_id !=', 0], ['periode_input', $perInput['periode_input'] ] ]);
-                $jml_terverif = $this->admin_model->get('id', 'apd', 3, [['petugas_id', $UserID], ['progress', 3], ['apd.mj_id !=', 0], ['periode_input', $perInput['periode_input'] ] ]);
-                $jml_ditolak = $this->admin_model->get('id', 'apd', 3, [['petugas_id', $UserID], ['progress', 1], ['apd.mj_id !=', 0], ['periode_input', $perInput['periode_input'] ] ]);*/
                 $persen_input = round( (($jml_belum_verif+$jml_terverif+$jml_ditolak)/$jumJenisApd)*100, 1);
                 $persen_tervalidasi = round( ($jml_terverif/$jumJenisApd)*100, 1);
                 $data_user = array( 'persen_inputAPD' => $persen_input,
                                     'persen_APDterverif' => $persen_tervalidasi,
                                     'jml_ditolak' => $jml_ditolak
                                 );
-                $this->admin_model->updateData('users', ['id', $UserID], $data_user);
+                $this->admin_model->updateData('users', ['id', $UserID], $data_user);*/
                 
                 redirect('kabid_sapras/verifikasiAPD/'.$UserID);
             }
@@ -1190,56 +1235,58 @@ class Kabid_sapras extends CI_Controller {
 		$this->data['active'] = $active;
 
         $this->data['pageTitle'] = 'Verifkasi APD';
-        $this->data['main_content'] = 'admin_sudin/verifikasiAPD';
-		$this->load->view('admin_sudin/includes/template', $this->data);
+        $this->data['main_content'] = 'admin_dinas/verifikasiAPD';
+		$this->load->view('admin_dinas/includes/template', $this->data);
     }
 
-    private function tervalidasi()
+    public function tervalidasi()
     {
         $this->authenticate();
         //$perInput = $this->admin_model->get('periode_input', 'master_state', 2, [['tipe', 'input']]);
 
-        $search = null;
+        /*$search = null;
         if ($this->input->server('REQUEST_METHOD') === 'GET')
 		{
             if (! empty($this->input->get('cari'))) {
                 $search = $this->input->get('cari'); 
             }
-        }
+        }*/
         $jab_id_arr = $this->config->item('verifikasi_list');
         foreach ($jab_id_arr as $jab_id) {
             $or_where_arr[] = ['master_jabatan.mc_id', $jab_id];
         }
-        $joinArr = [['users', 'master_pos', 'master_pos.nama_pos', 'kode_pos_id', 'id_mp' ], ['users', 'master_status', 'master_status.status', 'status_id', 'id_stat' ], 
-        ['users', 'master_jabatan', 'master_jabatan.nama_jabatan', 'jabatan_id', 'id_mj' ], ['master_jabatan', 'master_controller', 'master_controller.level', 'mc_id', 'id' ] ];
+        /*$joinArr = [['users', 'master_pos', 'master_pos.nama_pos', 'kode_pos_id', 'id_mp' ], ['users', 'master_status', 'master_status.status', 'status_id', 'id_stat' ], 
+        ['users', 'master_jabatan', 'master_jabatan.nama_jabatan', 'jabatan_id', 'id_mj' ], ['master_jabatan', 'master_controller', 'master_controller.level', 'mc_id', 'id' ] ];*/
         $order = ['master_controller.level', 'DESC'];
         $select = 'users.id, nama, NRK, NIP, photo';
         $joinTable = ['master_status', 'master_jabatan', 'master_controller'];
-        if (is_null($search)) {
-            $listUser = $this->_get_users($select, 1, null, [['master_pos.kode_pos', $this->data['kode_pos'], 'after']], $or_where_arr, null, $joinTable, $order);
+        /*if (is_null($search)) {
+            $listUser = $this->_get_users($select, 1, [['persen_APDterverif >', 0]], [['master_pos.kode_pos', $this->data['kode_pos'], 'after']], $or_where_arr, null, $joinTable, $order);
             /*$listUser = $this->admin_model->get('users.id, nama, NRK, NIP, photo', 'users', 1, [['active', 1]], [['master_pos.kode_pos', $this->data['kode_pos'], 'after']], $joinArr,
                                             $order, null, $or_where_arr);*/
-        } else {
+        /*} else {
             $or_likeArr = [['users.nama', $search], ['users.NRK', $search], ['master_jabatan.nama_jabatan', $search], ['master_pos.nama_pos', $search] ];
-            $listUser = $this->_get_users($select, 1, null, [['master_pos.kode_pos', $this->data['kode_pos'], 'after']], $or_where_arr, $or_likeArr, $joinTable, $order);
+            $listUser = $this->_get_users($select, 1, [['persen_APDterverif >', 0]], [['master_pos.kode_pos', $this->data['kode_pos'], 'after']], $or_where_arr, $or_likeArr, $joinTable, $order);
             /*$listUser = $this->admin_model->get('users.id, nama, NRK, NIP, photo', 'users', 1, [['active', 1]], [['master_pos.kode_pos', $this->data['kode_pos'], 'after']], $joinArr,
                                             $order, null, $or_where_arr, $or_likeArr);*/
-        }
-        $this->data['search'] = $search;
+        //}
+        //$this->data['search'] = $search;
+        $listUser = $this->_get_users($select, 1, [['persen_APDterverif >', 0]], [['master_pos.kode_wilayah', '0.', 'after']], $or_where_arr, null, $joinTable, $order);
 
-        $ApdUser = [];
-        foreach ($listUser as $user) {
+
+        $ApdUser = $listUser;
+        /*foreach ($listUser as $user) {
             $listAPD = $this->_get_apds('id', 3, [['petugas_id', $user['id']], ['progress', 3]]);
             //$listAPD = $this->admin_model->get('id', 'apd', 3, [['petugas_id', $user['id']], ['progress', 3], ['periode_input', $perInput['periode_input'] ] ]);
             if($listAPD > 0){
                 $ApdUser[]=  $user;
             }
-        }
-        if (is_null($search)) {
+        }*/
+        /*if (is_null($search)) {
             $this->data['section_tittle'] = 'Menampilkan '.count($ApdUser).' data petugas';
         } else {
             $this->data['section_tittle'] = 'Hasil Pencarian kata "'.$search.'" ditemukan '.count($ApdUser).' data';
-        }
+        }*/
         
         $this->data['ApdUser'] = $ApdUser;
         $this->data['url2'] = 'APDtervalidasi';
@@ -1253,11 +1300,11 @@ class Kabid_sapras extends CI_Controller {
         $this->data['datatable'] = true;
 
         $this->data['pageTitle'] = 'Daftar Terverifikasi';
-        $this->data['main_content'] = 'admin_sudin/list_verifikasi';
+        $this->data['main_content'] = 'admin_dinas/list_verifikasi';
 		$this->load->view('admin_dinas/includes/template', $this->data);
     }
 
-    private function APDtervalidasi()
+    public function APDtervalidasi()
     {
         $this->authenticate();
         //$this->load->library('session');
@@ -1266,10 +1313,10 @@ class Kabid_sapras extends CI_Controller {
         $UserID = $this->uri->segment(3);
         //cek idUser
         $joinTable = ['master_jabatan', 'master_status'];
-        $userData = $this->_get_users('id, nama, NRK, NIP, master_pos.kode_pos', 2, [['id', $UserID]], null, null, null, $joinTable);
+        $userData = $this->_get_users('id, nama, NRK, NIP, master_pos.kode_wilayah', 2, [['id', $UserID]], null, null, null, $joinTable);
         //$userData = $this->admin_model->get('id, nama, NRK, NIP', 'users', 2, [['active', 1], ['id', $UserID]], null, [['users', 'master_pos', 'master_pos.kode_pos, master_pos.nama_pos', 'kode_pos_id', 'id_mp' ], ['users', 'master_status', 'master_status.status', 'status_id', 'id_stat' ], ['users', 'master_jabatan', 'master_jabatan.nama_jabatan', 'jabatan_id', 'id_mj' ] ] );
         if (is_array($userData)) {
-            if( (strpos($userData['kode_pos'], $this->data['kode_pos'])) === false || $userData['NRK'] == $this->data['nrk']){
+            if( (strpos($userData['kode_wilayah'], '0.')) === false ){
                 redirect("my404");
             }
         }
@@ -1286,7 +1333,13 @@ class Kabid_sapras extends CI_Controller {
         //d($userData,$listAPD, $post);
         $this->data['icon'] = ['checkmark', 'success'];
         $this->data['UserID'] = $UserID;
-        $this->data['jumJenisApd'] = $this->_get_jml_jenis_apd();
+
+        //get role_id user
+        $joinArr2 = [['users', 'master_jabatan', 'master_jabatan.mc_id', 'jabatan_id', 'id_mj' ], 
+                        ['master_jabatan', 'master_controller', 'master_controller.role_id', 'mc_id', 'id' ] ];
+        $role_id_arr = $this->admin_model->get('users.id', 'users', 2, [['users.id', $UserID]], null, $joinArr2);
+        $user_role_id = $role_id_arr['role_id'];
+        $this->data['jumJenisApd'] = $this->_get_jml_jenis_apd(null, $user_role_id);
         $this->data['jumInputApd'] = $this->_get_apds('id', 3, [['petugas_id', $UserID], ['progress', 2]]);
         $this->data['jumApdTerverifikasi'] = $this->_get_apds('id', 3, [['petugas_id', $UserID], ['progress', 3]]);
         $this->data['jumApdDitolak'] = $this->_get_apds('id', 3, [['petugas_id', $UserID], ['progress', 1]]);
@@ -1304,15 +1357,15 @@ class Kabid_sapras extends CI_Controller {
 		$this->data['active'] = $active;
 
         $this->data['pageTitle'] = 'APD Terverifikasi';
-        $this->data['main_content'] = 'admin_sudin/apd_detail';
+        $this->data['main_content'] = 'admin_dinas/apd_detail';
 		$this->load->view('admin_dinas/includes/template', $this->data);
     }
 
-    private function ditolak()
+    public function ditolak()
     {
         $this->authenticate();
         
-        $perInput = $this->admin_model->get('periode_input', 'master_state', 2, [['tipe', 'input']]);
+        /*$perInput = $this->admin_model->get('periode_input', 'master_state', 2, [['tipe', 'input']]);
 
         $search = null;
         if ($this->input->server('REQUEST_METHOD') === 'GET')
@@ -1320,12 +1373,12 @@ class Kabid_sapras extends CI_Controller {
             if (! empty($this->input->get('cari'))) {
                 $search = $this->input->get('cari'); 
             }
-        }
+        }*/
         $jab_id_arr = $this->config->item('verifikasi_list');
         foreach ($jab_id_arr as $jab_id) {
             $or_where_arr[] = ['master_jabatan.mc_id', $jab_id];
         }
-        $joinArr = [['users', 'master_pos', 'master_pos.nama_pos', 'kode_pos_id', 'id_mp' ], ['users', 'master_status', 'master_status.status', 'status_id', 'id_stat' ], 
+        /*$joinArr = [['users', 'master_pos', 'master_pos.nama_pos', 'kode_pos_id', 'id_mp' ], ['users', 'master_status', 'master_status.status', 'status_id', 'id_stat' ], 
         ['users', 'master_jabatan', 'master_jabatan.nama_jabatan', 'jabatan_id', 'id_mj' ], ['master_jabatan', 'master_controller', 'master_controller.level', 'mc_id', 'id' ] ];
         $order = ['master_controller.level', 'DESC'];
         if (is_null($search)) {
@@ -1336,10 +1389,13 @@ class Kabid_sapras extends CI_Controller {
             $listUser = $this->admin_model->get('users.id, nama, NRK, NIP, photo', 'users', 1, [['active', 1]], [['master_pos.kode_pos', $this->data['kode_pos'], 'after']], $joinArr,
                                             $order, null, $or_where_arr, $or_likeArr);
         }
-        $this->data['search'] = $search;
+        $this->data['search'] = $search;*/
+        $select = 'users.id, nama, NRK, NIP, photo';
+        $joinTable = ['master_status', 'master_jabatan', 'master_controller'];
+        $listUser = $this->_get_users($select, 1, [['users.jml_ditolak >', 0]], [['master_pos.kode_wilayah', '0.', 'after']], $or_where_arr, null, $joinTable);
 
-        $ApdUser = [];
-        foreach ($listUser as $user) {
+        $ApdUser = $listUser;
+        /*foreach ($listUser as $user) {
             $listAPD = $this->admin_model->get('id', 'apd', 3, [['petugas_id', $user['id']], ['progress', 1], ['periode_input', $perInput['periode_input'] ] ]);
             if($listAPD > 0){
                 $ApdUser[]=  $user;
@@ -1349,7 +1405,7 @@ class Kabid_sapras extends CI_Controller {
             $this->data['section_tittle'] = 'Menampilkan '.count($ApdUser).' data petugas';
         } else {
             $this->data['section_tittle'] = 'Hasil Pencarian kata "'.$search.'" ditemukan '.count($ApdUser).' data';
-        }
+        }*/
         //d($ApdUser);
         $this->data['ApdUser'] = $ApdUser;
         $this->data['title'] = array( 'APD Tertolak', 'Daftar APD Pegawai yang ditolak Laporan nya', 'danger');
@@ -1365,11 +1421,11 @@ class Kabid_sapras extends CI_Controller {
         $this->data['datatable'] = true;
 
         $this->data['pageTitle'] = 'Daftar APD Tertolak';
-        $this->data['main_content'] = 'admin_sudin/list_verifikasi';
-		$this->load->view('admin_sudin/includes/template', $this->data);
+        $this->data['main_content'] = 'admin_dinas/list_verifikasi';
+		$this->load->view('admin_dinas/includes/template', $this->data);
     }
 
-    private function APDtertolak()
+    public function APDtertolak()
     {
         $this->authenticate();
         
@@ -1378,9 +1434,9 @@ class Kabid_sapras extends CI_Controller {
         $perInput = $this->admin_model->get('periode_input', 'master_state', 2, [['tipe', 'input']]);
         $UserID = $this->uri->segment(3);
         //cek idUser
-        $userData = $this->admin_model->get('id, nama, NRK, NIP, master_pos.kode_pos', 'users', 2, [['active', 1], ['id', $UserID]], null, [['users', 'master_pos', 'master_pos.nama_pos', 'kode_pos_id', 'id_mp' ], ['users', 'master_status', 'master_status.status', 'status_id', 'id_stat' ], ['users', 'master_jabatan', 'master_jabatan.nama_jabatan', 'jabatan_id', 'id_mj' ] ] );
+        $userData = $this->admin_model->get('id, nama, NRK, NIP, master_pos.kode_wilayah', 'users', 2, [['active', 1], ['id', $UserID]], null, [['users', 'master_pos', 'master_pos.nama_pos', 'kode_pos_id', 'id_mp' ], ['users', 'master_status', 'master_status.status', 'status_id', 'id_stat' ], ['users', 'master_jabatan', 'master_jabatan.nama_jabatan', 'jabatan_id', 'id_mj' ] ] );
         if (is_array($userData)) {
-            if( (strpos($userData['kode_pos'], $this->data['kode_pos'])) === false || $userData['NRK'] == $this->data['nrk']){
+            if( (strpos($userData['kode_wilayah'], '0.')) === false ){
                 redirect("my404");
             }
         }
@@ -1390,7 +1446,13 @@ class Kabid_sapras extends CI_Controller {
         $this->data['title'] = 'Daftar APD Tertolak';
         $this->data['icon'] = ['close', 'danger'];
         $this->data['UserID'] = $UserID;
-        $this->data['jumJenisApd'] = $this->_get_jml_jenis_apd();
+
+        //get role_id user
+        $joinArr2 = [['users', 'master_jabatan', 'master_jabatan.mc_id', 'jabatan_id', 'id_mj' ], 
+                        ['master_jabatan', 'master_controller', 'master_controller.role_id', 'mc_id', 'id' ] ];
+        $role_id_arr = $this->admin_model->get('users.id', 'users', 2, [['users.id', $UserID]], null, $joinArr2);
+        $user_role_id = $role_id_arr['role_id'];
+        $this->data['jumJenisApd'] = $this->_get_jml_jenis_apd(null, $user_role_id);
         $this->data['jumInputApd'] = $this->admin_model->get('id', 'apd', 3,  [['petugas_id', $UserID], ['progress', 2], ['mj_id !=', 0]]);
         $this->data['jumApdTerverifikasi'] = $this->admin_model->get('id', 'apd', 3,  [['petugas_id', $UserID], ['progress', 3], ['mj_id !=', 0]]);
         $this->data['jumApdDitolak'] = $this->admin_model->get('id', 'apd', 3,  [['petugas_id', $UserID], ['progress', 1], ['mj_id !=', 0]]);
@@ -1405,10 +1467,11 @@ class Kabid_sapras extends CI_Controller {
 		$this->data['active'] = $active;
 
         $this->data['pageTitle'] = 'APD Tertolak';
-        $this->data['main_content'] = 'admin_sudin/apd_detail';
-		$this->load->view('admin_sudin/includes/template', $this->data);
+        $this->data['main_content'] = 'admin_dinas/apd_detail';
+		$this->load->view('admin_dinas/includes/template', $this->data);
     }
 
+    //belum selesai
     private function lap_sewaktu()
     {
         $this->authenticate();
@@ -4182,4 +4245,6 @@ class Kabid_sapras extends CI_Controller {
         echo json_encode($response);
         exit();
     }
+
+    
 }
