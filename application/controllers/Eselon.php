@@ -248,7 +248,7 @@ class Eselon extends CI_Controller {
    public function index()
     {
         $size_data = $this->petugas_model->get('id', 'users_ukuran', [['users_id', $this->data['user_id'] ]], null, 2);
-        if (is_array($size_data)) {
+        if (is_array($size_data) || $this->data['is_plt']) {
             redirect(''.$this->data['controller'].'/home');
         } else {
             $this->_fill_size();
