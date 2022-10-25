@@ -1,18 +1,11 @@
 <!-- Improved compatibility of back to top link: See: https://github.com/othneildrew/Best-README-Template/pull/73 -->
 <a name="readme-top"></a>
 
-[![MIT License][license-shield]][license-url]
-[![LinkedIn][linkedin-shield]][linkedin-url]
-
-
 
 <!-- PROJECT LOGO -->
 <br />
 <div align="center">
-  <a href="https://github.com/bidCegahDamkar/eapd/assets/img/logo-eapd.png">
-    <img src="images/logo.png" alt="Logo" width="80" height="80">
-  </a>
-
+ 
   <h3 align="center">Aplikasi Pendataan APD Dinas Penanggulangan Kebakaran dan Penyelamatan</h3>
   <h3 align="center">Provinsi DKI Jakarta</h3>
 
