@@ -9,7 +9,7 @@
 <!-- PROJECT LOGO -->
 <br />
 <div align="center">
-  <a href="https://github.com/bidCegahDamkar/eapd/blob/main/assets/img/logo-eapd.png">
+  <a href="https://github.com/bidCegahDamkar/eapd/assets/img/logo-eapd.png">
     <img src="images/logo.png" alt="Logo" width="80" height="80">
   </a>
 
