@@ -7,8 +7,6 @@
 <div align="center">
  
   <h2 align="center">eAPD</h3>
-  <h3 align="center">Aplikasi Pendataan APD Dinas Penanggulangan Kebakaran dan Penyelamatan</h3>
-  <h3 align="center">Provinsi DKI Jakarta</h3>
 
 </div>
 
