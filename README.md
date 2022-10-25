@@ -1,7 +1,47 @@
-<h3 align="center">Applikasi Pendataan APD Dinas Penanggulangan Kebakaran dan Penyelamatan</h3>
+<!-- Improved compatibility of back to top link: See: https://github.com/othneildrew/Best-README-Template/pull/73 -->
+<a name="readme-top"></a>
 
-<p align="left">
-</p>
+[![MIT License][license-shield]][license-url]
+[![LinkedIn][linkedin-shield]][linkedin-url]
 
-<h3 align="left">Languages and Tools:</h3>
-<p align="left"> <a href="https://getbootstrap.com" target="_blank" rel="noreferrer"> <img src="https://raw.githubusercontent.com/devicons/devicon/master/icons/bootstrap/bootstrap-plain-wordmark.svg" alt="bootstrap" width="40" height="40"/> </a> <a href="https://www.chartjs.org" target="_blank" rel="noreferrer"> <img src="https://www.chartjs.org/media/logo-title.svg" alt="chartjs" width="40" height="40"/> </a> <a href="https://codeigniter.com" target="_blank" rel="noreferrer"> <img src="https://cdn.worldvectorlogo.com/logos/codeigniter.svg" alt="codeigniter" width="40" height="40"/> </a> <a href="https://www.w3schools.com/css/" target="_blank" rel="noreferrer"> <img src="https://raw.githubusercontent.com/devicons/devicon/master/icons/css3/css3-original-wordmark.svg" alt="css3" width="40" height="40"/> </a> <a href="https://www.w3.org/html/" target="_blank" rel="noreferrer"> <img src="https://raw.githubusercontent.com/devicons/devicon/master/icons/html5/html5-original-wordmark.svg" alt="html5" width="40" height="40"/> </a> <a href="https://www.linux.org/" target="_blank" rel="noreferrer"> <img src="https://raw.githubusercontent.com/devicons/devicon/master/icons/linux/linux-original.svg" alt="linux" width="40" height="40"/> </a> <a href="https://www.mysql.com/" target="_blank" rel="noreferrer"> <img src="https://raw.githubusercontent.com/devicons/devicon/master/icons/mysql/mysql-original-wordmark.svg" alt="mysql" width="40" height="40"/> </a> </p>
+
+
+<!-- PROJECT LOGO -->
+<br />
+<div align="center">
+  <a href="https://github.com/bidCegahDamkar/eapd/blob/main/assets/img/logo-eapd.png">
+    <img src="images/logo.png" alt="Logo" width="80" height="80">
+  </a>
+
+  <h3 align="center">Aplikasi Pendataan APD Dinas Penanggulangan Kebakaran dan Penyelamatan</h3>
+  <h3 align="center">Provinsi DKI Jakarta</h3>
+
+</div>
+
+
+
+
+<!-- ABOUT THE PROJECT -->
+## About The Project
+
+
+Aplikasi eAPD merupakan aplikasi berbasis web untuk pendataan APD seluruh pegawai Dinas Penanggulangan Kebakaran dan Penyelamatan Provinsi DKI Jakarta.
+
+
+
+### Built With
+
+Framework, dan Library yang digunakan :
+
+* Code Igniter 3
+* TC-PDF
+* Bootstrap
+* Jquery
+* Data Table
+* Chart JS
+* Compressor JS
+* Mobilekit
+* Admin Circle
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
