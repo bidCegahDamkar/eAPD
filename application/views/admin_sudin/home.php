@@ -2,11 +2,12 @@
       <div class="main-wrapper">
         <? //d($listNamaJenisAPD, $list_sudin, $list_sektor, $list_pos); 
             //d($kode_pos_min); ?>
+        <?php $now_time = date("H:i:s", now('Asia/Jakarta')); ?>
         <div class="row">
           <div class="col-12">
             <div class="card bg-primary">
                 <div class="card-body">
-                    <h3 class="text-white">Selamat Datang</h3>
+                    <h3 class="text-white"><?= greeting($now_time); ?></h3>
                     <h5 class="text-white mb-0"><?php echo $username; ?></h5>
                     <h5 class="text-white mb-0"><?php echo $jabatan['nama_jabatan']; ?></h5>
                     <h5 class="text-white mb-0"><?php echo $sudin; ?></h5>
@@ -24,9 +25,9 @@
           </div>
 
           <?php 
-          $data_sudin = $list_sudin[0]; 
-          $persen_input = round( $data_sudin['jml_input']/(($data_sudin['jml_pns']+$data_sudin['jml_pjlp'])*$jumJenisApd)*100,2 );
-          $persen_verif = round( $data_sudin['jml_verif']/(($data_sudin['jml_pns']+$data_sudin['jml_pjlp'])*$jumJenisApd)*100,2 );
+          $data_sudin = $list_sudin; 
+          //$persen_input = round( $data_sudin['jml_input']/(($data_sudin['jml_pns']+$data_sudin['jml_pjlp'])*$jumJenisApd)*100,2 );
+          //$persen_verif = round( $data_sudin['jml_verif']/(($data_sudin['jml_pns']+$data_sudin['jml_pjlp'])*$jumJenisApd)*100,2 );
           ?>
 
           <div class="col-md-6 col-xl-3">
@@ -119,6 +120,7 @@
                           <tbody>';
                               foreach ($pos['data'] as $data) {
                                 $jum_peg1 = $data['jml_pns']+$data['jml_pjlp'];
+                                $jmlApd = (($data['jml_ops']*$jmlJenisApdOps)+($data['jml_non_ops']*$jmlJenisApdNons));
                                 if ($jum_peg1 == 0) {
                                   echo '
                                   <tr>
@@ -126,8 +128,8 @@
                                   </tr>
                                   ';
                                 } else {
-                                  $persen_input = round( $data['jml_input']/($jum_peg1*$jumJenisApd)*100,2 );
-                                  $persen_verif = round( $data['jml_verif']/($jum_peg1*$jumJenisApd)*100,2 );
+                                  $persen_input = round( $data['jml_input']/($jmlApd)*100,2 );
+                                  $persen_verif = round( $data['jml_verif']/($jmlApd)*100,2 );
                                   echo '
                                   <tr>
                                       <td>'.$data['nama_pos'].'</td>
@@ -170,6 +172,7 @@
                           <tbody>';
                               foreach ($pos['data'] as $data) {
                                 $jum_peg2 = $data['jml_pns']+$data['jml_pjlp'];
+                                $jmlApd = (($data['jml_ops']*$jmlJenisApdOps)+($data['jml_non_ops']*$jmlJenisApdNons));
                                 if ($jum_peg2 == 0) {
                                   echo '
                                   <tr>
@@ -177,8 +180,8 @@
                                   </tr>
                                   ';
                                 } else {
-                                  $persen_input = round( $data['jml_input']/($jum_peg2*$jumJenisApd)*100,2 );
-                                  $persen_verif = round( $data['jml_verif']/($jum_peg2*$jumJenisApd)*100,2 );
+                                  $persen_input = round( $data['jml_input']/($jmlApd)*100,2 );
+                                  $persen_verif = round( $data['jml_verif']/($jmlApd)*100,2 );
                                   echo '
                                   <tr>
                                       <td>'.$data['nama_pos'].'</td>

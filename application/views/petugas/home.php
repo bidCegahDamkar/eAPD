@@ -1,10 +1,12 @@
 <!-- App Capsule -->
 <div id="appCapsule">
 
+    <?php $now_time = date("H:i:s", now('Asia/Jakarta')); ?>
+    
     <div class="card text-white bg-danger my-2 mx-1">
         <div class="card-body">
             <?php $retVal = ($controller == 'danton') ? $group_piket : '' ; ?>
-            <h1 class="title text-white">Selamat Datang</h1>
+            <h1 class="title text-white"><?= greeting($now_time); ?> Komandan</h1>
             <h4 class="subtitle text-white mb-0"><?php echo $username; ?></h4>
             <h4 class="subtitle text-white mb-0"><?php echo $jabatan['nama_jabatan'].' '.$retVal; ?></h4>
             <h4 class="subtitle text-white mb-0"><?php echo $penempatan['nama_pos']; ?></h4>

@@ -1,7 +1,7 @@
     <div class="page-content">
       <div class="main-wrapper">
         <? //d($listUserFireJacket); 
-          //d($listNamaJenisAPD, $input_series, $verif_series);?>
+          //d($list_sudin, $list_sektor);?>
         <div class="row">
           <div class="col-12">
             <div class="card bg-primary">
@@ -25,8 +25,8 @@
 
           <?php 
           $data_sudin = $list_dinas[0]; 
-          $persen_input = round( $data_sudin['jml_input']/(($data_sudin['jml_pns']+$data_sudin['jml_pjlp'])*$jumJenisApd)*100,2 );
-          $persen_verif = round( $data_sudin['jml_verif']/(($data_sudin['jml_pns']+$data_sudin['jml_pjlp'])*$jumJenisApd)*100,2 );
+          //$persen_input = round( $data_sudin['jml_input']/(($data_sudin['jml_pns']+$data_sudin['jml_pjlp'])*$jumJenisApd)*100,2 );
+          //$persen_verif = round( $data_sudin['jml_verif']/(($data_sudin['jml_pns']+$data_sudin['jml_pjlp'])*$jumJenisApd)*100,2 );
           ?>
 
           <div class="col-md-6 col-xl-3">
@@ -119,11 +119,12 @@
                           <tbody>';
                               foreach ($sektor['data'] as $data) {
                                 $jml_peg = $data['jml_pns']+$data['jml_pjlp'];
+                                $jmlApd = (($data['jml_ops']*$jmlJenisApdOps)+($data['jml_non_ops']*$jmlJenisApdNons));
                                 if ($jml_peg == 0) {
                                   $persen_input = $persen_verif = 0;
                                 } else {
-                                  $persen_input = round( $data['jml_input']/($jml_peg*$jumJenisApd)*100,2 );
-                                  $persen_verif = round( $data['jml_verif']/($jml_peg*$jumJenisApd)*100,2 );
+                                  $persen_input = round( $data['jml_input']/($jmlApd)*100,2 );
+                                  $persen_verif = round( $data['jml_verif']/($jmlApd)*100,2 );
                                 }
                                 echo '
                                 <tr>
@@ -166,11 +167,12 @@
                           <tbody>';
                               foreach ($sektor['data'] as $data) {
                                 $jml_peg = $data['jml_pns']+$data['jml_pjlp'];
+                                $jmlApd = (($data['jml_ops']*$jmlJenisApdOps)+($data['jml_non_ops']*$jmlJenisApdNons));
                                 if ($jml_peg == 0) {
                                   $persen_input = $persen_verif = 0;
                                 } else {
-                                  $persen_input = round( $data['jml_input']/($jml_peg*$jumJenisApd)*100,2 );
-                                  $persen_verif = round( $data['jml_verif']/($jml_peg*$jumJenisApd)*100,2 );
+                                  $persen_input = round( $data['jml_input']/($jmlApd)*100,2 );
+                                  $persen_verif = round( $data['jml_verif']/($jmlApd)*100,2 );
                                 }
                                 echo '
                                 <tr>

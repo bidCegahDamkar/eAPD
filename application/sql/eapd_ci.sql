@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost
--- Generation Time: Oct 23, 2022 at 06:40 AM
+-- Generation Time: Oct 26, 2022 at 07:54 AM
 -- Server version: 10.4.24-MariaDB
 -- PHP Version: 7.4.29
 
@@ -514,28 +514,15 @@ CREATE TABLE `users` (
   `NIP` varchar(100) DEFAULT NULL,
   `jabatan_id` tinyint(3) DEFAULT NULL COMMENT 'refer ke tabel master_jabatan',
   `active` tinyint(1) UNSIGNED DEFAULT 1,
-  `jabatan` varchar(150) DEFAULT NULL,
   `photo` varchar(255) DEFAULT NULL,
-  `kode_pos123` varchar(50) DEFAULT NULL COMMENT 'refer ke tabel master_pos',
   `kode_pos_id` int(11) DEFAULT NULL COMMENT 'refer ke tabel master pos',
   `no_telepon` varchar(50) DEFAULT NULL,
-  `group_piket` varchar(10) DEFAULT NULL,
   `group_piket_id` tinyint(2) DEFAULT NULL COMMENT 'refer ke table master group piket',
   `status_id` tinyint(3) DEFAULT NULL COMMENT 'refer ke tabel master_status',
   `deleted` tinyint(1) NOT NULL DEFAULT 0,
   `create_date` datetime NOT NULL DEFAULT current_timestamp(),
   `update_date` datetime DEFAULT NULL,
   `email` varchar(254) DEFAULT NULL,
-  `tgl_lahir` date DEFAULT NULL,
-  `berat_badan` smallint(3) DEFAULT NULL,
-  `tinggi_badan` smallint(3) DEFAULT NULL,
-  `uk_baret` varchar(3) DEFAULT NULL,
-  `uk_kaos` varchar(3) DEFAULT NULL,
-  `uk_baju` varchar(3) DEFAULT NULL,
-  `uk_celana` varchar(3) DEFAULT NULL,
-  `uk_jaket` varchar(3) DEFAULT NULL,
-  `uk_sepatu` varchar(3) DEFAULT NULL,
-  `uk_gloves` varchar(3) DEFAULT NULL,
   `last_login` int(11) UNSIGNED DEFAULT NULL,
   `ip_address` varchar(45) NOT NULL,
   `created_on` int(11) UNSIGNED NOT NULL,
@@ -814,7 +801,7 @@ ALTER TABLE `users`
   ADD UNIQUE KEY `uc_activation_selector` (`activation_selector`),
   ADD UNIQUE KEY `uc_forgotten_password_selector` (`forgotten_password_selector`),
   ADD UNIQUE KEY `uc_remember_selector` (`remember_selector`),
-  ADD KEY `id` (`id`,`jabatan_id`,`kode_pos123`,`group_piket`,`status_id`,`active`),
+  ADD KEY `id` (`id`,`jabatan_id`,`status_id`,`active`),
   ADD KEY `kode_pos_id` (`kode_pos_id`),
   ADD KEY `group_piket_id` (`group_piket_id`),
   ADD KEY `deleted` (`deleted`);

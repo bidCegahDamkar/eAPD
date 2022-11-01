@@ -1,6 +1,6 @@
     <div class="page-content">
       <div class="main-wrapper">
-        <? //d($list_report); ?>
+        <? //d($KIB_APD, $chart_verif_APD); ?>
         <div class="row justify-content-md-center">
           <div class="col-8">
             <div class="card">

@@ -605,3 +605,26 @@ if(!function_exists('badge_bg_color'))
 		return ($color);
 	}
 }
+
+if(!function_exists('greeting'))
+{
+	function greeting($now_time)
+	{
+		$split = explode(':', $now_time);
+		$menit = $split[0]*60;
+		$menit += $split[1];
+		
+		if ($menit <= 300) {
+			$greet = 'Selamat Dini Hari';
+		} else if ($menit <= 659)  {
+			$greet = 'Selamat Pagi';
+		} else if ($menit <= 900)  {
+			$greet = 'Selamat Siang';
+		} else if ($menit <= 1080)  {
+			$greet = 'Selamat Sore';
+		} else{
+			$greet = 'Selamat Malam';
+		}
+		return $greet;
+	}
+}

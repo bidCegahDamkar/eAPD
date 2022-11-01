@@ -103,8 +103,7 @@ class Auto extends CI_Controller {
 
     private function _get_jml_jenis_apd($where=null, $roles_id=2)
     {
-        //$default_where = [['deleted', 0], ['role_id >=', $roles_id]];
-        $default_where = [['role_id >=', $roles_id]];
+        $default_where = [['deleted', 0], ['role_id', $roles_id]];
         if (! is_null($where) && is_array($where)) {
             foreach ($where as $w) {
                 array_push($default_where, $w);
@@ -116,8 +115,7 @@ class Auto extends CI_Controller {
 
     private function _get_list_jenis_apd($select, $where=null, $resultType=1, $roles_id=2)
     {        
-        //$default_where = [['master_jenis_apd.deleted', 0], ['role_id >=', $roles_id]];
-        $default_where = [ ['role_id >=', $roles_id]];
+        $default_where = [['master_jenis_apd.deleted', 0], ['role_id', $roles_id]];
         if (! is_null($where) && is_array($where)) {
             foreach ($where as $w) {
                 array_push($default_where, $w);
@@ -129,29 +127,23 @@ class Auto extends CI_Controller {
     }
 
     private function _fillMasterPos($list_pos=null)
-    //public function fillMasterPos($list_pos=null)
     {
         $table = 'master_pos';
         $this->load->helper('date');
 
         if (is_null($list_pos)) {
             $list_pos = $this->admin_model->get('id_mp as id, kode_pos as kode, nama_pos as nama, alamat', $table, 1, [['deleted', 0]]);
-            //$list_pos = $this->admin_model->get('id_mp as id, kode_pos as kode, nama_pos as nama, alamat', $table, 1, [['deleted', 0]], null, null, null, [1, 0]);
+            //$list_pos = $this->admin_model->get('id_mp as id, kode_pos as kode, nama_pos as nama, alamat', $table, 1, [['deleted', 0]], null, null, null, [25, 0]);
             //$list_pos = $this->admin_model->get('id_mp as id, kode_pos as kode, nama_pos as nama, alamat', $table, 1, [['kode_sektor', '7.2']]);
-            //$list_pos = $this->admin_model->get('id_mp as id, kode_pos as kode, nama_pos as nama, alamat', $table, 1, [['kode_sektor', '2.17']]);
-            //$list_pos = $this->admin_model->get('id_mp as id, kode_pos as kode, nama_pos as nama, alamat', $table, 1, [['kode_wilayah', '5']]);
         }
-        
         $list_jenis_apd = $this->_get_list_jenis_apd('id_mj, jenis_apd, kode_barang, satuan');
-        //d($list_jenis_apd);
-        $joinTable1 = ['master_jabatan', 'master_controller'];
+        $joinTable1 = ['master_jabatan'];
         $joinTable2 = ['users', 'master_jabatan', 'master_pos'];
-        //$joinTable3 = ['users', 'master_jabatan', 'master_controller'];
         /*$jab_id_arr = $this->config->item('mcID_list_monitoring');
         foreach ($jab_id_arr as $jab_id) {
             $or_where_arr[] = ['master_jabatan.mc_id', $jab_id];
         }*/
-        $or_where_arr = $like = null;
+        $or_where_arr = null;
         $joinTable3 = [ ['master_apd', 'master_merk', 'master_merk.merk', 'mm_id', 'id_mm' ], 
                         ['master_apd', 'master_jenis_apd', 'master_jenis_apd.jenis_apd', 'mj_id', 'id_mj' ]];
         
@@ -159,23 +151,16 @@ class Auto extends CI_Controller {
 
         $progress = array(  ['where' => ['apd.progress !=', 0], 'col' => 'chart_input_APD'],
                             ['where' => ['apd.progress', 3], 'col' => 'chart_verif_APD'] );
-
-        /*$list_key_mAPD = ['kepGub', 'not_kepGub'];
-        $list_mAPD['kepGub'] = $this->admin_model->get('id_ma, mm_id, master_apd.deleted as all', 'master_apd', 1, [['kep_gub', 1]], null, $joinTable3 );
-        $list_mAPD['not_kepGub'] = $this->admin_model->get('id_ma, mm_id, master_apd.deleted as all', 'master_apd', 1, [['kep_gub', 0]], null, $joinTable3 );*/
-
         $failed = $result = $result_kib = [];
         $whr_apd1 = ['active', 1];
         $whr_apd2 = ['users.deleted', 0];
         foreach ($list_pos as $pos) {
             // fill col jml_pns, jml_pjlp, dst
             //$like = [['master_pos.kode_pos', $pos['kode'], 'after']];
-            
+            $like = null;
             $where_pos = ['master_pos.kode_pos', $pos['kode']];
-            $select1 = 'users.id';
+            $select1 = 'id';
             $select2 = 'apd.id';
-            $jmlOps = $this->_get_users($select1, 3, [['master_controller.role_id', 2], $where_pos], $like, $or_where_arr, null, $joinTable1);
-            $jmlNonOps = $this->_get_users($select1, 3, [['master_controller.role_id >', 2], $where_pos], $like, $or_where_arr, null, $joinTable1);
             $jmlPNS = $this->_get_users($select1, 3, [['status_id', 0], $where_pos], $like, $or_where_arr, null, $joinTable1);
             $jmlPJLP = $this->_get_users($select1, 3, [['status_id', 1], $where_pos], $like, $or_where_arr, null, $joinTable1);
             $jumSdhInput = $this->_get_apds($select2, 3, [['progress !=', 0], $where_pos, $whr_apd1, $whr_apd2 ], $like, $or_where_arr, null, $joinTable2);
@@ -184,8 +169,6 @@ class Auto extends CI_Controller {
             $my_time = date("Y-m-d H:i:s", now('Asia/Jakarta'));
             $data = array(  'jml_pns' => $jmlPNS, 
                             'jml_pjlp' => $jmlPJLP,
-                            'jml_ops' => $jmlOps,
-                            'jml_non_ops' => $jmlNonOps,
                             'jml_input' => $jumSdhInput,
                             'jml_verif' => $jumVerified,
                             'jml_ditolak' => $jumDitolak,
@@ -209,7 +192,7 @@ class Auto extends CI_Controller {
                                         'jml_rr' => $jml_rr,
                                         'jml_rs' => $jml_rs,
                                         'jml_rb' => $jml_rb,
-                                        'tot_existing' => ($jml_baik+$jml_rr+$jml_rs+$jml_rb), 
+                                        'tot_existing' => ($jml_baik+$jml_rr+$jml_rs+$jml_rb),
                                         'jml_blm' => $jml_blm,
                                         'jml_hilang' => $jml_hilang,
                                         'tot_kurang' => ($jml_blm+$jml_hilang),
@@ -219,45 +202,26 @@ class Auto extends CI_Controller {
                     
                     // fill col KIB_APD
                     if ($key['col'] == 'chart_input_APD') {         // run sekali aja
-                        //$list_apd = $this->admin_model->get('id_ma, tahun', 'master_apd', 1, [['master_apd.deleted', 0], ['mj_id', $jenis_apd['id_mj']]], null, $joinTable3);
-                        $list_apd = $this->admin_model->get('id_ma, mm_id, kep_gub, master_apd.deleted as all, tahun', 'master_apd', 1, [['mj_id', $jenis_apd['id_mj']]], null, $joinTable3);
+                        $list_apd = $this->admin_model->get('id_ma, tahun', 'master_apd', 1, [['master_apd.deleted', 0], ['mj_id', $jenis_apd['id_mj']]], null, $joinTable3);
                         foreach ($list_apd as $apd) {
-                            if ($apd['all'] == 1) {
-                                $jml_blm = $jmlOps + $jmlNonOps;
-                                $jml_baik = $jml_rr = $jml_rs = $jml_rb = $jml_hilang = 0;
-                            } else {
-                                $jml_baik = $this->_get_apds('apd.id', 3, [['apd.mkp_id', 1], ['master_kondisi.kategori', 4], ['apd.progress', 3], ['mapd_id', $apd['id_ma']], $where_pos, $whr_apd1, $whr_apd2 ], $like, $or_where_arr, null, $join_arr);
-                                $jml_rr = $this->_get_apds('apd.id', 3, [['apd.mkp_id', 1], ['master_kondisi.kategori', 3], ['apd.progress', 3], ['mapd_id', $apd['id_ma']], $where_pos, $whr_apd1, $whr_apd2 ], $like, $or_where_arr, null, $join_arr);
-                                $jml_rs = $this->_get_apds('apd.id', 3, [['apd.mkp_id', 1], ['master_kondisi.kategori', 2], ['apd.progress', 3], ['mapd_id', $apd['id_ma']], $where_pos, $whr_apd1, $whr_apd2 ], $like, $or_where_arr, null, $join_arr);
-                                $jml_rb = $this->_get_apds('apd.id', 3, [['apd.mkp_id', 1], ['master_kondisi.kategori', 1], ['apd.progress', 3], ['mapd_id', $apd['id_ma']], $where_pos, $whr_apd1, $whr_apd2 ], $like, $or_where_arr, null, $join_arr);
-                                
-                                $jml_blm = $this->_get_apds('apd.id', 3, [['apd.mkp_id', 3], ['apd.progress', 3], ['mapd_id', $apd['id_ma']], $where_pos, $whr_apd1, $whr_apd2 ], $like, $or_where_arr, null, $join_arr);
-                                $jml_hilang = $this->_get_apds('apd.id', 3, [['apd.mkp_id', 2], ['apd.progress', 3], ['mapd_id', $apd['id_ma']], $where_pos, $whr_apd1, $whr_apd2 ], $like, $or_where_arr, null, $join_arr);
-
-                                //$jml_blm = $this->_get_apds('apd.id', 3, [['apd.mkp_id', 3], $key['where'], ['apd.mj_id', $jenis_apd['id_mj']], $where_pos, $whr_apd1, $whr_apd2 ], $like, $or_where_arr, null, $join_arr);
-                                //$jml_hilang = $this->_get_apds('apd.id', 3, [['apd.mkp_id', 2], $key['where'], ['apd.mj_id', $jenis_apd['id_mj']], $where_pos, $whr_apd1, $whr_apd2 ], $like, $or_where_arr, null, $join_arr);
+                            $jml_baik = $this->_get_apds('apd.id', 3, [['apd.mkp_id', 1], ['master_kondisi.kategori', 4], ['apd.progress', 3], ['mapd_id', $apd['id_ma']], $where_pos, $whr_apd1, $whr_apd2 ], $like, $or_where_arr, null, $join_arr);
+                            $jml_rr = $this->_get_apds('apd.id', 3, [['apd.mkp_id', 1], ['master_kondisi.kategori', 3], ['apd.progress', 3], ['mapd_id', $apd['id_ma']], $where_pos, $whr_apd1, $whr_apd2 ], $like, $or_where_arr, null, $join_arr);
+                            $jml_rs = $this->_get_apds('apd.id', 3, [['apd.mkp_id', 1], ['master_kondisi.kategori', 2], ['apd.progress', 3], ['mapd_id', $apd['id_ma']], $where_pos, $whr_apd1, $whr_apd2 ], $like, $or_where_arr, null, $join_arr);
+                            $jml_rb = $this->_get_apds('apd.id', 3, [['apd.mkp_id', 1], ['master_kondisi.kategori', 1], ['apd.progress', 3], ['mapd_id', $apd['id_ma']], $where_pos, $whr_apd1, $whr_apd2 ], $like, $or_where_arr, null, $join_arr);
+                            if ($jml_baik != 0 || $jml_rr != 0 || $jml_rs != 0 || $jml_rb != 0) {
+                                $result_kib[$apd['id_ma']] = array(  'kode_barang' => $jenis_apd['kode_barang'],
+                                                                    'jenis_apd' => $jenis_apd['jenis_apd'],
+                                                                    'merk' => $apd['merk'],
+                                                                    'tahun' => $apd['tahun'],
+                                                                    'jml_baik' => $jml_baik, 
+                                                                    'jml_rr' => $jml_rr,
+                                                                    'jml_rs' => $jml_rs,
+                                                                    'jml_rb' => $jml_rb,
+                                                                    'total' => ($jml_baik+$jml_rr+$jml_rs+$jml_rb),
+                                                                    'id_mj' => $jenis_apd['id_mj'],
+                                                                    'satuan' => $jenis_apd['satuan']
+                                                                    );
                             }
-                            $tot_existing = $jml_baik+$jml_rr+$jml_rs+$jml_rb;
-                            $tot_kurang = $jml_blm+$jml_hilang;
-                            $total = $tot_existing+$tot_kurang;
-                            $result_kib[$apd['id_ma']] = array(  'id_ma' => $apd['id_ma'],
-                                                                'kode_barang' => $jenis_apd['kode_barang'],
-                                                                'jenis_apd' => $jenis_apd['jenis_apd'],
-                                                                'merk' => $apd['merk'],
-                                                                'tahun' => $apd['tahun'],
-                                                                'kep_gub' => $apd['kep_gub'],
-                                                                'jml_baik' => $jml_baik, 
-                                                                'jml_rr' => $jml_rr,
-                                                                'jml_rs' => $jml_rs,
-                                                                'jml_rb' => $jml_rb,
-                                                                'jml_blm' => $jml_blm,
-                                                                'jml_hilang' => $jml_hilang,
-                                                                'total' => $tot_existing,
-                                                                'tot_kurang' => $tot_kurang,
-                                                                'total_all' => $total,
-                                                                'id_mj' => $jenis_apd['id_mj'],
-                                                                'satuan' => $jenis_apd['satuan']
-                                                                );
                         }
                     }
                 }
@@ -269,7 +233,7 @@ class Auto extends CI_Controller {
             $json_kib = json_encode($result_kib);
             $data['KIB_APD'] = $json_kib;
             $result_kib = [];
-            
+
             //save to db
             if ($this->admin_model->updateData('master_pos', ['id_mp', $pos['id']], $data) ) {
                 $success = true;
@@ -278,7 +242,6 @@ class Auto extends CI_Controller {
             }
         }
         return $success;
-        //d($data);
     }
 
     private function _addJSON($newJSON, $oldArray)
@@ -315,20 +278,19 @@ class Auto extends CI_Controller {
     private function _fillMasterSektor($list_sektor=null)
     {
         //ini_set('max_execution_time', 360000);
-        //set_time_limit(360000);
+        set_time_limit(360000);
         $table = 'master_sektor';
         $this->load->helper('date');
 
         if (is_null($list_sektor)) {
             $list_sektor = $this->admin_model->get('id, kode, sektor', $table, 1, [['deleted', 0]]);
-            //$list_sektor = $this->admin_model->get('id, kode, sektor', $table, 1, [['deleted', 0]], [['kode', '2.17', 'after']]);
         }
-        //$list_jenis_apd = $this->_get_list_jenis_apd('id_mj, jenis_apd, kode_barang');
+        $list_jenis_apd = $this->_get_list_jenis_apd('id_mj, jenis_apd, kode_barang');
         $failed = [];
         foreach ($list_sektor as $sektor) {
-            $select = 'id_mp, jml_pns, jml_pjlp, jml_input, jml_verif, jml_ditolak, chart_input_APD, chart_verif_APD, KIB_APD, jml_ops, jml_non_ops';
+            $select = 'id_mp, jml_pns, jml_pjlp, jml_input, jml_verif, jml_ditolak, chart_input_APD, chart_verif_APD, KIB_APD';
             $list_pos = $this->admin_model->get($select, 'master_pos', 1, [['deleted', 0], ['kode_sektor', $sektor['kode']] ]);
-            $jml_pns = $jml_pjlp = $jml_input = $jml_verif = $jml_ditolak = $jmlOps = $jmlNonOps = 0;
+            $jml_pns = $jml_pjlp = $jml_input = $jml_verif = $jml_ditolak = 0;
             $chart_input_APD = $chart_verif_APD = $KIB_APD = [];
             foreach ($list_pos as $pos) {
                 $jml_pns += $pos['jml_pns'];
@@ -336,8 +298,6 @@ class Auto extends CI_Controller {
                 $jml_input += $pos['jml_input'];
                 $jml_verif += $pos['jml_verif'];
                 $jml_ditolak += $pos['jml_ditolak'];
-                $jmlOps += $pos['jml_ops'];
-                $jmlNonOps += $pos['jml_non_ops'];
                 $chart_input_APD = $this->_addJSON($pos['chart_input_APD'], $chart_input_APD);
                 $chart_verif_APD = $this->_addJSON($pos['chart_verif_APD'], $chart_verif_APD);
                 $KIB_APD = $this->_addJSON($pos['KIB_APD'], $KIB_APD);
@@ -348,8 +308,6 @@ class Auto extends CI_Controller {
                             'jml_input' => $jml_input,
                             'jml_verif' => $jml_verif,
                             'jml_ditolak' => $jml_ditolak,
-                            'jml_ops' => $jmlOps,
-                            'jml_non_ops' => $jmlNonOps,
                             'chart_input_APD' => json_encode($chart_input_APD),
                             'chart_verif_APD' => json_encode($chart_verif_APD),
                             'KIB_APD' => json_encode($KIB_APD),
@@ -367,20 +325,19 @@ class Auto extends CI_Controller {
     private function _fillMasterSudin($list_sudin=null)
     {
         //ini_set('max_execution_time', 360000);
-        //set_time_limit(360000);
+        set_time_limit(360000);
         $table = 'master_sudin';
         $this->load->helper('date');
 
         if (is_null($list_sudin)) {
             $list_sudin = $this->admin_model->get('id, kode, sudin', $table, 1, [['deleted', 0]]);
-            //$list_sudin = $this->admin_model->get('id, kode, sudin', $table, 1, [['deleted', 0], ['kode', 5]]);
         }
         $failed = [];
         foreach ($list_sudin as $sudin) {
-            $select = 'id, jml_pns, jml_pjlp, jml_input, jml_verif, jml_ditolak, chart_input_APD, chart_verif_APD, KIB_APD, jml_ops, jml_non_ops';
+            $select = 'id, jml_pns, jml_pjlp, jml_input, jml_verif, jml_ditolak, chart_input_APD, chart_verif_APD, KIB_APD';
             $list_sektor = $this->admin_model->get($select, 'master_sektor', 1, [['deleted', 0]], [['kode', $sudin['kode'], 'after']]);
             //$list_pos = $this->admin_model->get($select, 'master_pos', 1, [['deleted', 0], ['kode_sektor', $sudin['kode']] ]);
-            $jml_pns = $jml_pjlp = $jml_input = $jml_verif = $jml_ditolak = $jmlOps = $jmlNonOps = 0;
+            $jml_pns = $jml_pjlp = $jml_input = $jml_verif = $jml_ditolak = 0;
             $chart_input_APD = $chart_verif_APD = $KIB_APD = [];
             foreach ($list_sektor as $sektor) {
                 $jml_pns += $sektor['jml_pns'];
@@ -388,8 +345,6 @@ class Auto extends CI_Controller {
                 $jml_input += $sektor['jml_input'];
                 $jml_verif += $sektor['jml_verif'];
                 $jml_ditolak += $sektor['jml_ditolak'];
-                $jmlOps += $sektor['jml_ops'];
-                $jmlNonOps += $sektor['jml_non_ops'];
                 $chart_input_APD = $this->_addJSON($sektor['chart_input_APD'], $chart_input_APD);
                 $chart_verif_APD = $this->_addJSON($sektor['chart_verif_APD'], $chart_verif_APD);
                 $KIB_APD = $this->_addJSON($sektor['KIB_APD'], $KIB_APD);
@@ -400,8 +355,6 @@ class Auto extends CI_Controller {
                             'jml_input' => $jml_input,
                             'jml_verif' => $jml_verif,
                             'jml_ditolak' => $jml_ditolak,
-                            'jml_ops' => $jmlOps,
-                            'jml_non_ops' => $jmlNonOps,
                             'chart_input_APD' => json_encode($chart_input_APD),
                             'chart_verif_APD' => json_encode($chart_verif_APD),
                             'KIB_APD' => json_encode($KIB_APD),
@@ -424,10 +377,10 @@ class Auto extends CI_Controller {
         $list_dinas = $this->admin_model->get('id, kode, dinas', $table, 1, [['deleted', 0]]);
         $failed = [];
         foreach ($list_dinas as $dinas) {
-            $select = 'id, jml_pns, jml_pjlp, jml_input, jml_verif, jml_ditolak, chart_input_APD, chart_verif_APD, KIB_APD, jml_ops, jml_non_ops';
+            $select = 'id, jml_pns, jml_pjlp, jml_input, jml_verif, jml_ditolak, chart_input_APD, chart_verif_APD, KIB_APD';
             $list_sudin = $this->admin_model->get($select, 'master_sudin', 1, [['deleted', 0]]);
             //$list_pos = $this->admin_model->get($select, 'master_pos', 1, [['deleted', 0], ['kode_sektor', $dinas['kode']] ]);
-            $jml_pns = $jml_pjlp = $jml_input = $jml_verif = $jml_ditolak = $jmlOps = $jmlNonOps = 0;
+            $jml_pns = $jml_pjlp = $jml_input = $jml_verif = $jml_ditolak = 0;
             $chart_input_APD = $chart_verif_APD = $KIB_APD = [];
             foreach ($list_sudin as $sudin) {
                 $jml_pns += $sudin['jml_pns'];
@@ -435,8 +388,6 @@ class Auto extends CI_Controller {
                 $jml_input += $sudin['jml_input'];
                 $jml_verif += $sudin['jml_verif'];
                 $jml_ditolak += $sudin['jml_ditolak'];
-                $jmlOps += $sudin['jml_ops'];
-                $jmlNonOps += $sudin['jml_non_ops'];
                 $chart_input_APD = $this->_addJSON($sudin['chart_input_APD'], $chart_input_APD);
                 $chart_verif_APD = $this->_addJSON($sudin['chart_verif_APD'], $chart_verif_APD);
                 $KIB_APD = $this->_addJSON($sudin['KIB_APD'], $KIB_APD);
@@ -447,8 +398,6 @@ class Auto extends CI_Controller {
                             'jml_input' => $jml_input,
                             'jml_verif' => $jml_verif,
                             'jml_ditolak' => $jml_ditolak,
-                            'jml_ops' => $jmlOps,
-                            'jml_non_ops' => $jmlNonOps,
                             'chart_input_APD' => json_encode($chart_input_APD),
                             'chart_verif_APD' => json_encode($chart_verif_APD),
                             'KIB_APD' => json_encode($KIB_APD),
@@ -519,7 +468,7 @@ class Auto extends CI_Controller {
 
     public function iterate($password = null)
     {
-        //$this->_fillMasterPos();
+        //$execute = $this->_fillMasterPos();
         //$execute = $this->_fillMasterSektor();
         //$execute = $this->_fillMasterSudin();
         //$execute = $this->_fillMasterDinas();
@@ -530,10 +479,10 @@ class Auto extends CI_Controller {
             $execute = $this->_fillMasterSektor();
             $execute = $this->_fillMasterSudin();
             $execute = $this->_fillMasterDinas();
-            echo 'sukses iterate data rekap';
+            echo 'sukses';
             return true;
         } else {
-            echo 'failed iterate data rekap';
+            echo 'failed';
             return false;
         }
 

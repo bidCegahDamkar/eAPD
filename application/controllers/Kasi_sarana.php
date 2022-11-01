@@ -188,9 +188,14 @@ class Kasi_sarana extends CI_Controller {
         return $result;
     }
 
-    private function _get_jml_jenis_apd($where=null, $roles_id=2)
+    private function _get_jml_jenis_apd($where=null, $roles_id=2, $is_all=false)
     {
-        $default_where = [['deleted', 0], ['role_id >=', $roles_id]];
+        if ($is_all) {
+            $default_where = [['role_id >=', $roles_id]];
+        } else {
+            $default_where = [['master_jenis_apd.deleted', 0], ['role_id >=', $roles_id]];
+        }
+        
         if (! is_null($where) && is_array($where)) {
             foreach ($where as $w) {
                 array_push($default_where, $w);
@@ -200,9 +205,15 @@ class Kasi_sarana extends CI_Controller {
         return $result;
     }
 
-    private function _get_list_jenis_apd($select, $where=null, $resultType=1, $roles_id=2)
-    {        
-        $default_where = [['master_jenis_apd.deleted', 0], ['role_id >=', $roles_id]];
+    private function _get_list_jenis_apd($select, $where=null, $resultType=1, $roles_id=2, $is_all=false)
+    {    
+        if ($is_all) {
+            $default_where = [['role_id >=', $roles_id]];
+        } else {
+            $default_where = [['master_jenis_apd.deleted', 0], ['role_id >=', $roles_id]];
+        }
+        
+        //$default_where = [['master_jenis_apd.deleted', 0], ['role_id >=', $roles_id]];
         if (! is_null($where) && is_array($where)) {
             foreach ($where as $w) {
                 array_push($default_where, $w);
@@ -288,11 +299,20 @@ class Kasi_sarana extends CI_Controller {
 
     public function home()
     {
+        $this->load->helper('date');
+
+        $this->data['jmlJenisApdOps'] = $jmlJenisApdOps = $this->_get_jml_jenis_apd(null, 2);
+        $this->data['jmlJenisApdNons'] = $jmlJenisApdNons = $this->_get_jml_jenis_apd(null, 9);
+        
         $this->data['jumJenisApd'] = $this->_get_jml_jenis_apd();
-        $select1 = 'jml_pns, jml_pjlp, jml_input, jml_verif, jml_ditolak';
-        $this->data['list_sudin'] = $this->admin_model->get($select1, 'master_sudin', 1, [['deleted', 0], ['kode', $this->data['kode_pos_min']]]);
-        $select2 = 'kode, sektor as sudin, jml_pns, jml_pjlp, jml_input, jml_verif, jml_ditolak, chart_input_APD, chart_verif_APD';
-        $select3 = 'nama_pos, jml_pns, jml_pjlp, jml_input, jml_verif, jml_ditolak';
+        $select1 = 'jml_pns, jml_pjlp, jml_input, jml_verif, jml_ditolak, jml_ops, jml_non_ops';
+        $this->data['list_sudin'] = $list_sudin = $this->admin_model->get($select1, 'master_sudin', 2, [['deleted', 0], ['kode', $this->data['kode_pos_min']]]);
+        $jmlApd = (($list_sudin['jml_ops']*$jmlJenisApdOps)+($list_sudin['jml_non_ops']*$jmlJenisApdNons));
+        $this->data['persen_input'] = round( $list_sudin['jml_input']/$jmlApd*100, 2 );
+        $this->data['persen_verif'] = round( $list_sudin['jml_verif']/$jmlApd*100, 2 );
+
+        $select2 = 'kode, sektor as sudin, jml_pns, jml_pjlp, jml_input, jml_verif, jml_ditolak, chart_input_APD, chart_verif_APD, jml_ops, jml_non_ops';
+        $select3 = 'nama_pos, jml_pns, jml_pjlp, jml_input, jml_verif, jml_ditolak, jml_ops, jml_non_ops';
         $list_sektor = $this->admin_model->get($select2, 'master_sektor', 1, [['deleted', 0]], [['kode', $this->data['kode_pos'], 'after']]);
         $this->data['list_sektor'] = $list_sektor;
         foreach ($list_sektor as $sektor) {
@@ -1245,10 +1265,11 @@ class Kasi_sarana extends CI_Controller {
         //$my_time = date("Y-m-d H:i:s", now('Asia/Jakarta'));
         $tgl = $this->admin_model->get('tgl_update', 'master_sudin', 2, [['kode', $this->data['kode_pos_min'] ]]);
         $periode = str_replace(' ', '', $this->data['periode']);        //remove space if exist
-        $report_type = ['Rekap APD', 'KIB APD'];
-        $file_name1 = 'rekap-apd_'.$this->data['full_kode_pos'].'_'.$periode.'.pdf';
+        $report_type = ['Realisasi', 'KIB APD', 'Rekapitulasi APD'];
+        $file_name1 = 'realisasi_'.$this->data['full_kode_pos'].'_'.$periode.'.pdf';
         $file_name2 = 'kib-apd_'.$this->data['full_kode_pos'].'_'.$periode.'.pdf';
-        $file_names = [$file_name1, $file_name2];
+        $file_name3 = 'rekap-apd_'.$this->data['full_kode_pos'].'_'.$periode.'.pdf';
+        $file_names = [$file_name1, $file_name2, $file_name3];
         //$file_name2 = 'data-apd_'.$this->data['kode_pos'].'_'.$periode;
         //$file_name3 = 'data-petugas_'.$this->data['kode_pos'].'_'.$periode;
         //$file_names = [$file_name1, $file_name2, $file_name3];
@@ -1264,10 +1285,12 @@ class Kasi_sarana extends CI_Controller {
                                 'create_at' => $tgl['tgl_update']
                         );
                 $this->admin_model->insertData('report_pdf', $data);
-                if ($report_type[$i] == 'Rekap APD') {
-                    $this->create_report_apd_pdf($file_name, sqlDate2htmlminute($tgl['tgl_update']));
+                if ($report_type[$i] == 'Realisasi') {
+                    $this->create_report_realisasi_pdf($file_name, sqlDate2htmlminute($tgl['tgl_update']));
                 } else if ($report_type[$i] == 'KIB APD') {
                     $this->create_report_kib_pdf($file_name, sqlDate2htmlminute($tgl['tgl_update']));
+                } else if ($report_type[$i] == 'Rekapitulasi APD') {
+                    $this->create_report_rekap_pdf($file_name, sqlDate2htmlminute($tgl['tgl_update']));
                 }
             }else{
                 if ($this->data['is_open']) {
@@ -1275,11 +1298,14 @@ class Kasi_sarana extends CI_Controller {
                                 'create_at' => $tgl['tgl_update']
                         );
                     $this->admin_model->updateData('report_pdf', ['id', $cek_db['id']], $data);
-                }
-                if ($report_type[$i] == 'Rekap APD') {
-                    $this->create_report_apd_pdf($file_name, sqlDate2htmlminute($tgl['tgl_update']));
-                } else if ($report_type[$i] == 'KIB APD') {
-                    $this->create_report_kib_pdf($file_name, sqlDate2htmlminute($tgl['tgl_update']));
+
+                    if ($report_type[$i] == 'Realisasi') {
+                        $this->create_report_realisasi_pdf($file_name, sqlDate2htmlminute($tgl['tgl_update']));
+                    } else if ($report_type[$i] == 'KIB APD') {
+                        $this->create_report_kib_pdf($file_name, sqlDate2htmlminute($tgl['tgl_update']));
+                    } else if ($report_type[$i] == 'Rekapitulasi APD') {
+                        $this->create_report_rekap_pdf($file_name, sqlDate2htmlminute($tgl['tgl_update']));
+                    }
                 }
             }
             $i++;
@@ -1298,6 +1324,11 @@ class Kasi_sarana extends CI_Controller {
 
         //$data_sektor = $this->admin_model->get('KIB_APD', 'master_sektor', 2, [['kode', $this->data['kode_pos'] ]]);
         //$this->data['data_sektor'] = json_decode($data_sektor['KIB_APD'], true);
+
+        //$data_sektor = $this->admin_model->get('KIB_APD, chart_verif_APD', 'master_sudin', 2, [['kode', $this->data['kode_pos_min'] ]]);
+        //$this->data['KIB_APD'] = $list_kib= json_decode($data_sektor['KIB_APD'], true);
+        //$this->data['chart_verif_APD'] = json_decode($data_sektor['chart_verif_APD'], true);
+
         
         $active = $this->active;
 		$active['laporanMenu'] = 'active-page';
@@ -1310,6 +1341,7 @@ class Kasi_sarana extends CI_Controller {
         $this->data['pageTitle'] = 'Laporan PDF';
         $this->data['main_content'] = 'admin_sudin/list_pdf';
 		$this->load->view('admin_sudin/includes/template', $this->data);
+        //$this->load->view('admin_sudin/list_pdf', $this->data);
     }
 
     public function list_pdf1()
@@ -1367,7 +1399,7 @@ class Kasi_sarana extends CI_Controller {
 		$this->load->view('admin_sudin/includes/template', $this->data);
     }
 
-    private function create_report_apd_pdf($file_name, $date)
+    private function create_report_realisasi_pdf($file_name, $date)
     {
         //authentication
         $this->authenticate();
@@ -1435,7 +1467,7 @@ class Kasi_sarana extends CI_Controller {
             redirect("my404");
         }
 
-        $data_sektor = $this->admin_model->get('jml_pns, jml_pjlp, jml_verif, chart_verif_APD', 'master_sudin', 2, [['kode', $this->data['kode_pos_min'] ]]);
+        $data_sektor = $this->admin_model->get('jml_pns, jml_pjlp, jml_verif, chart_verif_APD, jml_ops, jml_non_ops', 'master_sudin', 2, [['kode', $this->data['kode_pos_min'] ]]);
         $chart_verif_APD = json_decode($data_sektor['chart_verif_APD'], true);
 
         //$rekapAPD = $this->_calculate_rekap_APD();
@@ -1447,7 +1479,13 @@ class Kasi_sarana extends CI_Controller {
         //$jmlPrsnl = $this->_get_users('id', 3, null, [['kode_pos', $this->data['kode_pos'], 'after']], $or_where_arr);
         //$jmlPrsnl = $this->admin_model->get('id', 'users', 3, [['active', 1]], [['kode_pos', $this->data['kode_pos'], 'after']], null, null, null, $or_where_arr );
         $jmlPrsnl = $data_sektor['jml_pns'] + $data_sektor['jml_pjlp'];
-        $jmltotalAPD = $jmlPrsnl*$this->_get_jml_jenis_apd();
+
+        //$jmltotalAPD = $jmlPrsnl*$this->_get_jml_jenis_apd();
+        $jmlJenisApdOps = $this->_get_jml_jenis_apd(null, 2);
+        $jmlJenisApdNons = $this->_get_jml_jenis_apd(null, 9);
+        $jmltotalAPD = (($data_sektor['jml_ops']*$jmlJenisApdOps)+($data_sektor['jml_non_ops']*$jmlJenisApdNons));
+
+
         $subheading1 = ['Sasaran Program', 'Indikator Kinerja', 'Periode input APD', 'Unit Kerja', 'Tanggal Update'];
         //hilangkan kata 'kantor'
         $penempatan1 = substr($this->data['penempatan']['nama_pos'], strpos($this->data['penempatan']['nama_pos'], 'Sektor'));
@@ -1803,9 +1841,10 @@ class Kasi_sarana extends CI_Controller {
 
         //$pdf->Ln(20);
         $pdf->SetY(70);
-        $th1 = [['No', 3], ['Kode Barang', 10], ['Nama APD', 18], ['Merk', 19], ['Tahun', 8], ['Jumlah APD Berdasarkan Kondisi', 28], ['Total', 6], ['Satuan', 8]];
+        //$th1 = [['No', 3], ['Kode Barang', 10], ['Nama APD', 18], ['Merk', 19], ['Tahun', 8], ['Jumlah APD Berdasarkan Kondisi', 28], ['Total', 6], ['Satuan', 8]];
+        $th1 = [['No', 3], ['Nama APD', 20], ['Pengadaan', 35], ['Jumlah APD Berdasarkan Kondisi', 28], ['Total', 6], ['Satuan', 8]];
         $th2 = [['Baik', 5], ['Kurang Baik', 9], ['Rusak', 5], ['Rusak Berat', 9] ];
-        $w = [3, 10, 18, 19, 8, 5, 9, 5, 9, 6, 8];
+        $w = [3, 20, 35, 5, 9, 5, 9, 6, 8];
         //$pdf->MultiCell(0, 5, 'A. Tabel Rekapitulasi Data APD Tervalidasi', 1, 'L', false, 1, '', '', true);
 
         $html = '
@@ -1813,7 +1852,7 @@ class Kasi_sarana extends CI_Controller {
             <thead>
                 <tr>';
         for ($i=0; $i < (count($th1)); $i++) { 
-            if ($i == 5) {
+            if ($i == 3) {
                 $html = $html.'<th colspan="4" width="'.$th1[$i][1].'%" style="text-align: center;">'.$th1[$i][0].'</th>';
             } else {
                 $html = $html.'<th rowspan="2" width="'.$th1[$i][1].'%" style="text-align: center;"><div style="font-size:6pt">&nbsp;</div>'.$th1[$i][0].'</th>';
@@ -1827,26 +1866,34 @@ class Kasi_sarana extends CI_Controller {
         $html = $html.'
         </tr>
         </thead><tbody>';
+        $list_show = ['jenis_apd', 'merk', 'jml_baik', 'jml_rr', 'jml_rs', 'jml_rb', 'total', 'satuan'];
+        $arr_key_show = $this->admin_model->get('id_ma', 'master_apd', 1, [['deleted', 0 ]]);
+        foreach ($arr_key_show as $key_value) {
+            $list_key_show[] = $key_value['id_ma'];
+        }
+
         $i=1;
         if (is_array($KIB_APD)) {
             foreach ($KIB_APD as $key1 => $value1) {
-                $html = $html.'<tr><td width="'.$w[0].'%" style="text-align: center;">'.$i.'</td>';
-                $j=1;
-                foreach ($value1 as $key2 => $value2) {
-                    if ($key2 != 'id_mj') {
-                        if ($key2=='jenis_apd' || $key2=='merk' || $key2=='satuan') {
-                            $html = $html.'<td width="'.$w[$j].'%">'.$value2.'</td>';
-                        } else if($key2=='tahun') {
-                            $html = $html.'<td width="'.$w[$j].'%" style="text-align: right;">'.$value2.'</td>';
+                if (in_array($key1, $list_key_show)) {
+                    $html = $html.'<tr><td width="'.$w[0].'%" style="text-align: center;">'.$i.'</td>';
+                    $j=1;
+                    foreach ($value1 as $key2 => $value2) {
+                        if (in_array($key2, $list_show) ) {
+                            if ($key2=='jenis_apd' || $key2=='merk' || $key2=='satuan') {
+                                $html = $html.'<td width="'.$w[$j].'%">'.$value2.'</td>';
+                            } else if($key2=='tahun') {
+                                $html = $html.'<td width="'.$w[$j].'%" style="text-align: right;">'.$value2.'</td>';
+                            }
+                            else {
+                                $html = $html.'<td width="'.$w[$j].'%" style="text-align: center;">'.$value2.'</td>';
+                            }
+                            $j++;
                         }
-                        else {
-                            $html = $html.'<td width="'.$w[$j].'%" style="text-align: center;">'.$value2.'</td>';
-                        }
-                        $j++;
                     }
+                    $html = $html.'</tr>';
+                    $i++;
                 }
-                $html = $html.'</tr>';
-                $i++;
             }
         } else {
             $html = $html.'<tr><td width="100%" style="text-align: center;">No Data</td></tr>';
@@ -1940,6 +1987,387 @@ class Kasi_sarana extends CI_Controller {
             </tbody>
         </table>';
         $pdf->writeHTMLCell(302, 0, 14, '', $html2, 0, 1, 0, true, '', true);
+        
+        // Close and output PDF document
+        // This method has several options, check the source code documentation for more information.
+        //$pdf->Output('example_001.pdf', 'I');
+        $pdf->Output(FCPATH.'upload/pdf/'.$file_name, 'F');
+
+        
+    }
+
+    private function hitung_jml_belum_kepgub($id_mj, $role, $delete)
+    {
+        $data = $this->admin_model->get('jml_ops, jml_non_ops, chart_verif_APD', 'master_sudin', 2, [['kode', $this->data['kode_pos_min'] ]]);
+        $chart_verif_APD = json_decode($data['chart_verif_APD'], true);
+        //$jumJenisApdOps = $this->_get_jml_jenis_apd(null, 2);
+        //$jumJenisApdNonOps = $this->_get_jml_jenis_apd(null, 9);
+        if ($delete == 1) {
+            if ($role == 2) {
+                $jml_blm = $data['jml_ops'];
+            } else {
+                $jml_blm = $data['jml_ops'] + $data['jml_non_ops'];
+            }
+        }else if (array_key_exists($id_mj, $chart_verif_APD) ){
+            $jml_blm = $chart_verif_APD[$id_mj]['jml_blm'];
+        }else{
+            if ($role == 2) {
+                $jml_blm = $data['jml_ops'];
+            } else {
+                $jml_blm = $data['jml_ops'] + $data['jml_non_ops'];
+            }
+        }
+        return $jml_blm;
+    }
+
+    private function create_head_table()
+    {
+        $w = [5, 25, 5, 8, 9, 8, 10, 8, 7, 10, 5];
+        $th = [['Baik', 5], ['Rusak Ringan', 8], ['Rusak Sedang', 9], ['Rusak Berat', 8], ['Subtotal Existing', 10], ['Belum Terima', 8], ['Hilang', 7], ['Subtotal Kurang', 10] ];
+        $th1 = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K'];
+        $list_sub_header = ['A. Rekapitulasi APD (Sesuai Kepgub 583/2022)', 'B. Rekapitulasi APD (Belum Sesuai Kepgub 583/2022)'];
+        $dhs = ['jml_baik', 'jml_rr','jml_rs', 'jml_rb', 'total'];
+        $lh = ['a. ', 'b. ', 'c. '];
+
+        $html = '
+        <table cellspacing="0" cellpadding="2" border="1">
+            <thead>
+                <tr>
+                    <th rowspan="2" width="5%" style="text-align: center;">No</th>
+                    <th rowspan="2" width="25%" style="text-align: center;">Jenis APD</th>
+                    <th colspan="5" width="40%" style="text-align: center;">Jumlah APD Berdasarkan Kondisi</th>
+                    <th colspan="3" width="25%" style="text-align: center;">Jumlah APD Berdasarkan Keberadaan</th>
+                    <th rowspan="2" width="5%" style="text-align: center;">Sub Total</th>
+                </tr>
+                <tr>
+                ';
+        for ($i=0; $i < count($th); $i++) { 
+            $html = $html.'<th width="'.$th[$i][1].'%" style="text-align: center;">'.$th[$i][0].'</th>';
+        }
+        $html = $html.'</tr><tr>';
+        for ($j=0; $j < count($th1); $j++) { 
+            $html = $html.'<th width="'.$w[$j].'%" style="text-align: center;">'.$th1[$j].'</th>';
+        }
+        $html = $html.'</tr>
+        </thead>';
+        return $html;
+    }
+
+    private function create_body_table($jenisAPD, $KIB_APD)
+    {
+        $w = [5, 25, 5, 8, 9, 8, 10, 8, 7, 10, 5];
+        $th = [['Baik', 5], ['Rusak Ringan', 8], ['Rusak Sedang', 9], ['Rusak Berat', 8], ['Subtotal Existing', 10], ['Belum Terima', 8], ['Hilang', 7], ['Subtotal Kurang', 10] ];
+        $th1 = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K'];
+        $list_sub_header = ['A. Rekapitulasi APD (Sesuai Kepgub 583/2022)', 'B. Rekapitulasi APD (Belum Sesuai Kepgub 583/2022)'];
+        $dhs = ['jml_baik', 'jml_rr','jml_rs', 'jml_rb', 'total'];
+        $lh = ['a. ', 'b. ', 'c. '];
+
+        $html = '';
+        
+        $i = 0;
+        //foreach ($list_jenisAPD as $jenisAPD ) {
+        $total = [0, 0, 0, 0, 0, 0, 0, 0, 0];
+        $x = 0;
+        $list_id_ma = $this->admin_model->get('id_ma, kep_gub', 'master_apd', 1, [['mj_id', $jenisAPD['id_mj'] ]], null, null, ['kep_gub', 'DESC']);
+        $html = $html.'
+        <tr>
+            <td width="'.$w[0].'%" style="text-align: center;">'.($i+1).'</td>
+            <td colspan="10" width="95%" style="text-align: left;">'.$jenisAPD['jenis_apd'].'</td>
+        </tr>';
+        foreach ($list_id_ma as $id_ma) {
+            $j=2;
+            $jmlHilang = $KIB_APD[$id_ma['id_ma']]['jml_hilang'];
+            $subTotal = $KIB_APD[$id_ma['id_ma']]['total'];
+            if ($id_ma['kep_gub'] == 1) {
+                $num_belum = $this->hitung_jml_belum_kepgub($jenisAPD['id_mj'], $jenisAPD['role_id'], $jenisAPD['deleted']);
+                $html = $html.'
+                <tr>
+                    <td width="'.$w[0].'%" style="text-align: center;"></td>
+                    <td width="'.$w[1].'%" style="text-align: left;">'.$lh[$x].'Sesuai Kepgub 583/2022</td>';
+                foreach ($dhs as $dh) {
+                    $html = $html.'
+                    <td width="'.$w[$j].'%" style="text-align: right;">'.$KIB_APD[$id_ma['id_ma']][$dh].'</td>';
+                    $total[$j-2] = $total[$j-2] + $KIB_APD[$id_ma['id_ma']][$dh];
+                    $j++;
+                }
+                $html = $html.'
+                <td width="'.$w[7].'%" style="text-align: right;">'.$num_belum.'</td>
+                <td width="'.$w[8].'%" style="text-align: right;">'.$jmlHilang.'</td>
+                <td width="'.$w[9].'%" style="text-align: right;">'.($num_belum+$jmlHilang).'</td>
+                <td width="'.$w[10].'%" style="text-align: right;">'.($subTotal+$num_belum+$jmlHilang).'</td>
+                </tr>';
+                $total[5] = $total[5] + $num_belum;
+                $total[6] = $total[6] + $jmlHilang;
+                $total[7] = $total[7] + $num_belum + $jmlHilang;
+                $total[8] = $total[8] + $subTotal + $num_belum + $jmlHilang;
+            } else {
+                $html = $html.'
+                <tr>
+                    <td width="'.$w[0].'%" style="text-align: center;"></td>
+                    <td width="'.$w[1].'%" style="text-align: left;">'.$lh[$x].'Lainnya</td>';
+                foreach ($dhs as $dh) {
+                    $html = $html.'
+                    <td width="'.$w[$j].'%" style="text-align: right;">'.$KIB_APD[$id_ma['id_ma']][$dh].'</td>';
+                    $total[$j-2] = $total[$j-2] + $KIB_APD[$id_ma['id_ma']][$dh];
+                    $j++;
+                }
+                $jmlBelum = $KIB_APD[$id_ma['id_ma']]['jml_blm'];
+                $html = $html.'
+                <td width="'.$w[7].'%" style="text-align: right;">'.$jmlBelum.'</td>
+                <td width="'.$w[8].'%" style="text-align: right;">'.$jmlHilang.'</td>
+                <td width="'.$w[9].'%" style="text-align: right;">'.($jmlBelum+$jmlHilang).'</td>
+                <td width="'.$w[10].'%" style="text-align: right;">'.($subTotal+$jmlBelum+$jmlHilang).'</td>
+                </tr>';
+                $total[5] = $total[5] + $jmlBelum;
+                $total[6] = $total[6] + $jmlHilang;
+                $total[7] = $total[7] + $jmlBelum + $jmlHilang;
+                $total[8] = $total[8] + $subTotal + $jmlBelum + $jmlHilang;
+            }
+            $x++;
+        }
+        $i++;
+        //total per item
+        $j = 2;
+        $html = $html.'
+        <tr>
+            <td width="'.$w[0].'%" style="text-align: center;"></td>
+            <td width="'.$w[1].'%" style="text-align: left;">'.$lh[$x].'Total</td>';
+        foreach ($total as $value) {
+            $html = $html.'
+            <td width="'.$w[$j].'%" style="text-align: right;">'.$value.'</td>';
+            $j++;
+        }
+        $html = $html.'
+        </tr>';
+        //}
+
+        return $html;
+    }
+
+    private function create_report_rekap_pdf($file_name, $date)
+    {
+        //authentication
+        $this->authenticate();
+        $this->load->library('pdf');
+
+        // create new PDF document
+        //$pdf = new Pdf('L', 'mm', 'FOLIO', true, 'UTF-8', false);
+        $pdf = new Pdf(PDF_PAGE_ORIENTATION, PDF_UNIT, PDF_PAGE_FORMAT, true, 'UTF-8', false);
+		// set document information
+		$pdf->SetCreator(PDF_CREATOR);
+		$pdf->SetAuthor('kuz1toro@gmail.com');
+		$pdf->SetTitle('KIB APD Petugas');
+		//$pdf->CellSetSubject('TCPDF Tutorial');
+		$pdf->SetKeywords('TCPDF, PDF, example, test, guide');
+
+		$pdf->setPrintHeader(false);
+		// set default monospaced font
+		$pdf->SetDefaultMonospacedFont(PDF_FONT_MONOSPACED);
+
+        // set margins
+		$PDF_MARGIN_TOP = 20;
+		$pdf->SetMargins(PDF_MARGIN_LEFT, $PDF_MARGIN_TOP, PDF_MARGIN_RIGHT);
+		$pdf->SetHeaderMargin(PDF_MARGIN_HEADER);
+		$pdf->SetFooterMargin(PDF_MARGIN_FOOTER);
+
+		// set auto page breaks
+		$pdf->SetAutoPageBreak(TRUE, PDF_MARGIN_BOTTOM);
+
+		// set image scale factor
+		$pdf->setImageScale(PDF_IMAGE_SCALE_RATIO);
+
+		// set some language-dependent strings (optional)
+		if (@file_exists(dirname(__FILE__).'/lang/eng.php')) {
+			require_once(dirname(__FILE__).'/lang/eng.php');
+			$pdf->setLanguageArray($l);
+		}
+
+		// ---------------------------------------------------------
+
+        // set default font subsetting mode
+        $pdf->setFontSubsetting(true);
+        //$pdf->setFillColor(255, 255, 127);
+        // Set font
+        // dejavusans is a UTF-8 Unicode font, if you only need to
+        // print standard ASCII chars, you can use core fonts like
+        // helvetica or times to reduce file size.
+        $pdf->setFont('Times', 'B', 14, '', true);
+
+        // Add a page
+        // This method has several options, check the source code documentation for more information.
+        //$pdf->AddPage();
+        $pdf->AddPage('L', 'FOLIO');
+
+        $pdf->MultiCell(0, 5, 'Rekapitulasi Pendataan APD', 0, 'C', false, 1, '', '', true);
+        
+        $pdf->setFont('Times', '', 12, '', true);
+
+        $pdf->Ln(5);
+
+        //subheading
+        /*$joinArr = [['master_controller', 'master_jabatan', 'master_jabatan.id_mj', 'id', 'mc_id' ]];
+        $mc_id = $this->admin_model->get('master_controller.id', 'master_controller', 2, [['master_jabatan.id_mj', $this->data['jab_id']]], null, $joinArr);
+        $renkin = $this->admin_model->get('*', 'renkin', 2, [['mc_id', $mc_id['id']]]);
+        if (! is_array($renkin)) {
+            redirect("my404");
+        }*/
+
+        $data_sektor = $this->admin_model->get('KIB_APD, chart_verif_APD', 'master_sudin', 2, [['kode', $this->data['kode_pos_min'] ]]);
+        $KIB_APD = json_decode($data_sektor['KIB_APD'], true);
+        $chart_verif_APD = json_decode($data_sektor['chart_verif_APD'], true);
+        $list_jenisAPD = $this->_get_list_jenis_apd('id_mj, jenis_apd, role_id, deleted', null, 1, 2, true);
+
+        $unit = $this->admin_model->get('dinas', 'master_dinas', 2, [['id', 1 ]]);
+        $sub_unit = $this->admin_model->get('nama_jabatan, keterangan', 'master_jabatan', 2, [['id_mj', $this->data['jab_id'] ]]);
+        $satker = str_replace('Kepala ', '', $sub_unit['nama_jabatan']);
+
+        //$rekapAPD = $this->_calculate_rekap_APD();
+        //$rekapAPD['jmlJenisAPD'] = $rekapAPD['jmlAPDTervld'] = $rekapAPD['data']['jenis_apd'] = 1;
+        //$jmlPrsnl = $this->_get_users('id', 3, null, [['kode_pos', $this->data['kode_pos'], 'after']], $or_where_arr);
+        //$jmlPrsnl = $this->admin_model->get('id', 'users', 3, [['active', 1]], [['kode_pos', $this->data['kode_pos'], 'after']], null, null, null, $or_where_arr );
+        //$jmlPrsnl = $data_sektor['jml_pns'] + $data_sektor['jml_pjlp'];
+        //$jmltotalAPD = $jmlPrsnl*$this->_get_jml_jenis_apd();
+        $subheading1 = ['Provinsi', 'Unit Organisasi', 'Sub Unit Organisasi', 'Satuan Kerja', 'Periode Pendataan'];
+        $subheading2 = ['DKI Jakarta', $unit['dinas'], $sub_unit['keterangan'], $satker, $this->data['periode'] ];
+        //hilangkan kata 'kantor'
+        $penempatan1 = substr($this->data['penempatan']['nama_pos'], strpos($this->data['penempatan']['nama_pos'], 'Sektor'));
+        $penempatan2 = substr($this->data['penempatan']['nama_pos'], strpos($this->data['penempatan']['nama_pos'], 'sektor'));
+        $penempatan = (strlen($penempatan1)<strlen($penempatan2) ) ? $penempatan1 : $penempatan2 ;
+        
+        for ($i=0; $i < count($subheading1) ; $i++) { 
+            $pdf->MultiCell(40, 5, $subheading1[$i], 0, 'L', false, 0, '', '', true);
+            $pdf->MultiCell(0, 5, ': '.$subheading2[$i], 0, 'L', false, 1, '', '', true);
+        }
+
+        //$pdf->SetXY(20, 20);
+        $dki = FCPATH.'assets/login/logo_dki.png';
+        $damkar = FCPATH.'assets/login/logo_damkar_dki.png';
+        $pdf->Image($dki, 230, 32, 20, '', 'PNG', '', 'T', false, 300, '', false, false, 0, false, false, false);
+        $pdf->Image($damkar, 250, 32, 20, '', 'PNG', '', 'T', false, 300, '', false, false, 0, false, false, false);
+
+        // set style for barcode
+        $style = array(
+            'border' => 2,
+            'vpadding' => 'auto',
+            'hpadding' => 'auto',
+            'fgcolor' => array(0,0,0),
+            'bgcolor' => false, //array(255,255,255)
+            'module_width' => 1, // width of a single module in points
+            'module_height' => 1 // height of a single module in points
+        );
+        $pdf->write2DBarcode(base_url().'upload/pdf/'.$file_name, 'QRCODE,H', 280, 32, 40, 40, $style, 'N');
+
+        //$pdf->Ln(20);
+        $pdf->SetY(70);
+        
+        $w = [5, 25, 5, 8, 9, 8, 10, 8, 7, 10, 5];
+        $th = [['Baik', 5], ['Rusak Ringan', 8], ['Rusak Sedang', 9], ['Rusak Berat', 8], ['Subtotal Existing', 10], ['Belum Terima', 8], ['Hilang', 7], ['Subtotal Kurang', 10] ];
+        $th1 = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K'];
+        $list_sub_header = ['A. Rekapitulasi APD (Sesuai Kepgub 583/2022)', 'B. Rekapitulasi APD (Belum Sesuai Kepgub 583/2022)'];
+        $dhs = ['jml_baik', 'jml_rr','jml_rs', 'jml_rb', 'total'];
+        $lh = ['a. ', 'b. ', 'c. '];
+
+        $html = '
+        <table cellspacing="0" cellpadding="2" border="1">
+            <thead>
+                <tr>
+                    <th rowspan="2" width="5%" style="text-align: center; font-weight: bold; ">No</th>
+                    <th rowspan="2" width="25%" style="text-align: center; font-weight: bold;">Jenis APD</th>
+                    <th colspan="5" width="40%" style="text-align: center; font-weight: bold;">Jumlah APD Berdasarkan Kondisi</th>
+                    <th colspan="3" width="25%" style="text-align: center; font-weight: bold;">Jumlah APD Berdasarkan Keberadaan</th>
+                    <th rowspan="2" width="5%" style="text-align: center; font-weight: bold;">Sub Total</th>
+                </tr>
+                <tr>
+                ';
+        for ($i=0; $i < count($th); $i++) { 
+            $html = $html.'<th width="'.$th[$i][1].'%" style="text-align: center; font-weight: bold;">'.$th[$i][0].'</th>';
+        }
+        $html = $html.'</tr><tr>';
+        for ($j=0; $j < count($th1); $j++) { 
+            $html = $html.'<th width="'.$w[$j].'%" style="text-align: center; font-weight: bold;">'.$th1[$j].'</th>';
+        }
+        $html = $html.'</tr>
+        </thead><tbody>';
+
+        $i = 0;
+        foreach ($list_jenisAPD as $jenisAPD ) {
+            $total = [0, 0, 0, 0, 0, 0, 0, 0, 0];
+            $x = 0;
+            $list_id_ma = $this->admin_model->get('id_ma, kep_gub', 'master_apd', 1, [['mj_id', $jenisAPD['id_mj'] ]], null, null, ['kep_gub', 'DESC']);
+            $html = $html.'
+            <tr>
+                <td width="'.$w[0].'%" style="text-align: center;">'.($i+1).'</td>
+                <td colspan="10" width="95%" style="text-align: left;">'.$jenisAPD['jenis_apd'].'</td>
+            </tr>';
+            foreach ($list_id_ma as $id_ma) {
+                $j=2;
+                $jmlHilang = $KIB_APD[$id_ma['id_ma']]['jml_hilang'];
+                $subTotal = $KIB_APD[$id_ma['id_ma']]['total'];
+                if ($id_ma['kep_gub'] == 1) {
+                    $num_belum = $this->hitung_jml_belum_kepgub($jenisAPD['id_mj'], $jenisAPD['role_id'], $jenisAPD['deleted']);
+                    $html = $html.'
+                    <tr>
+                        <td width="'.$w[0].'%" style="text-align: center;"></td>
+                        <td width="'.$w[1].'%" style="text-align: left;">'.$lh[$x].'Sesuai Kepgub 583/2022</td>';
+                    foreach ($dhs as $dh) {
+                        $html = $html.'
+                        <td width="'.$w[$j].'%" style="text-align: right;">'.$KIB_APD[$id_ma['id_ma']][$dh].'</td>';
+                        $total[$j-2] = $total[$j-2] + $KIB_APD[$id_ma['id_ma']][$dh];
+                        $j++;
+                    }
+                    $html = $html.'
+                    <td width="'.$w[7].'%" style="text-align: right;">'.$num_belum.'</td>
+                    <td width="'.$w[8].'%" style="text-align: right;">'.$jmlHilang.'</td>
+                    <td width="'.$w[9].'%" style="text-align: right;">'.($num_belum+$jmlHilang).'</td>
+                    <td width="'.$w[10].'%" style="text-align: right;">'.($subTotal+$num_belum+$jmlHilang).'</td>
+                    </tr>';
+                    $total[5] = $total[5] + $num_belum;
+                    $total[6] = $total[6] + $jmlHilang;
+                    $total[7] = $total[7] + $num_belum + $jmlHilang;
+                    $total[8] = $total[8] + $subTotal + $num_belum + $jmlHilang;
+                } else {
+                    $html = $html.'
+                    <tr>
+                        <td width="'.$w[0].'%" style="text-align: center;"></td>
+                        <td width="'.$w[1].'%" style="text-align: left;">'.$lh[$x].'Lainnya</td>';
+                    foreach ($dhs as $dh) {
+                        $html = $html.'
+                        <td width="'.$w[$j].'%" style="text-align: right;">'.$KIB_APD[$id_ma['id_ma']][$dh].'</td>';
+                        $total[$j-2] = $total[$j-2] + $KIB_APD[$id_ma['id_ma']][$dh];
+                        $j++;
+                    }
+                    $jmlBelum = $KIB_APD[$id_ma['id_ma']]['jml_blm'];
+                    $html = $html.'
+                    <td width="'.$w[7].'%" style="text-align: right;">'.$jmlBelum.'</td>
+                    <td width="'.$w[8].'%" style="text-align: right;">'.$jmlHilang.'</td>
+                    <td width="'.$w[9].'%" style="text-align: right;">'.($jmlBelum+$jmlHilang).'</td>
+                    <td width="'.$w[10].'%" style="text-align: right;">'.($subTotal+$jmlBelum+$jmlHilang).'</td>
+                    </tr>';
+                    $total[5] = $total[5] + $jmlBelum;
+                    $total[6] = $total[6] + $jmlHilang;
+                    $total[7] = $total[7] + $jmlBelum + $jmlHilang;
+                    $total[8] = $total[8] + $subTotal + $jmlBelum + $jmlHilang;
+                }
+                $x++;
+            }
+            $i++;
+            //total per item
+            $j = 2;
+            $html = $html.'
+            <tr>
+                <td width="'.$w[0].'%" style="text-align: center;"></td>
+                <td width="'.$w[1].'%" style="text-align: left;">'.$lh[$x].'Total</td>';
+            foreach ($total as $value) {
+                $html = $html.'
+                <td width="'.$w[$j].'%" style="text-align: right;">'.$value.'</td>';
+                $j++;
+            }
+            $html = $html.'
+            </tr>';
+        }
+        $html = $html.'</tbody></table>';
+
+        $pdf->writeHTMLCell(302, 0, 14, '', $html, 0, 1, 0, true, '', true);
         
         // Close and output PDF document
         // This method has several options, check the source code documentation for more information.
@@ -2735,7 +3163,7 @@ class Kasi_sarana extends CI_Controller {
 
     private function _calculate_rekap_APD()
     {
-        $jenisApd = $this->_get_list_jenis_apd('id_mj, jenis_apd, akronim');
+        $jenisApd = $this->_get_list_jenis_apd('id_mj, jenis_apd, akronim', null, 1, 2, true);
         //$jenisApd = $this->my_apd->get_list_jenis_apd('id_mj, jenis_apd, akronim', $this->data['user_roles'], 1);
         $list_mc_id_bawahan = $this->config->item('mcID_list_monitoring');
         //$list_jab_id_bawahan[] = $this->data['jab_id'];

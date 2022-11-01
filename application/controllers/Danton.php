@@ -270,6 +270,7 @@ class Danton extends CI_Controller {
 
     public function home()
     {
+        $this->load->helper('date');
         /*$listEs = $this->petugas_model->get('*', 'master_eselon', null, null, 1);
         $duplicate = [];
         $nomach = [];

@@ -257,6 +257,7 @@ class Eselon extends CI_Controller {
 
     public function home()
     {        
+        $this->load->helper('date');
         $this->data['pageTitle'] = 'Dashboard';
         $this->data['main_content'] = 'petugas/home';
 		$this->load->view('petugas/includes/template', $this->data);
@@ -312,6 +313,7 @@ class Eselon extends CI_Controller {
         //$this->data['persenProgress'] = $persenProgress;
         $this->data['buttonProp'] = $buttonProp;
         
+        $this->data['data_rekap'] = $data_rekap;
         //d($buttonProp);
         //d($this->data['user_id']);
         $this->data['main_content'] = 'petugas/lapor';

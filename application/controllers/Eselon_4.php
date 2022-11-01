@@ -309,45 +309,7 @@ class Eselon_4 extends CI_Controller {
 
     public function home()
     {
-        /*$data_cc = $this->admin_model->get('*', 'cc_damkar', 1);
-        $id = 4139;
-        $failed = [];
-        $passw = '$2y$10$8cW1NFaAo52lSdwBe3ak1u0lJ/o.GPikbRuKn9ZRp2c1BwZAlNiaK';
-        foreach ($data_cc as $user_cc) {
-            $dupl_nrk = $this->admin_model->get('id', 'users', 3, [['NRK', $user_cc['nrk']]]);
-            if($dupl_nrk == 1){
-                //$ext_id = $this->admin_model->get('id', 'users', 2, [['NRK', $user_cc['nrk']]]);
-                $data_to_store12 = array('nama' => $user_cc['nama'],
-                                        'NIP' => $user_cc['nip'],
-                                        'jabatan_id' => $user_cc['jab_id'],
-                                        'kode_pos_id' => $user_cc['kode_pos'],
-                                        'group_piket' => $user_cc['piket'],
-                                        'group_piket_id' => $user_cc['piket_id'],
-                                        'status_id' => $user_cc['status_id']    );
-                $data_to_store12 = array('active' => 1);
-                $this->petugas_model->updateData('users', ['NRK', $user_cc['nrk']], $data_to_store12);
-            }elseif ($dupl_nrk == 0) {
-                $data_to_store1 = array( 'id' => $id, 
-                                    'NRK' => $user_cc['nrk'],
-                                    'password' => $passw,
-                                    'nama' => $user_cc['nama'],
-                                    'NIP' => $user_cc['nip'],
-                                    'jabatan_id' => $user_cc['jab_id'],
-                                    'kode_pos_id' => $user_cc['kode_pos'],
-                                    'group_piket' => $user_cc['piket'],
-                                    'group_piket_id' => $user_cc['piket_id'],
-                                    'status_id' => $user_cc['status_id']    );
-                $data_to_store2 = array( 'user_id' => $id, 
-                                    'group_id' => 2    );
-                $this->petugas_model->insertData('users', $data_to_store1);
-                $this->petugas_model->insertData('users_groups', $data_to_store2);
-                $id++;
-            }else {
-                $failed[] = $user_cc['nrk'];
-            }
-        }
-        $this->data['failed'] = $failed;*/
-
+        $this->load->helper('date');
         $jab_id_arr = $this->config->item('jabID_list_monitoring');
         foreach ($jab_id_arr as $jab_id) {
             $or_where_arr[] = ['jabatan_id', $jab_id];
@@ -355,11 +317,18 @@ class Eselon_4 extends CI_Controller {
         //$or_where_arr[] = ['jabatan_id', $this->data['jab_id']];
         $orderArr = ['kode_pos', 'ASC'];
 
-        $select = 'jml_pns, jml_pjlp, jml_input, jml_verif, jml_ditolak, chart_input_APD, chart_verif_APD';
-        $this->data['data_sektor'] = $data_sektor = $this->admin_model->get($select, 'master_sektor', 2, [['deleted', 0], ['kode', $this->data['kode_pos']] ]);
+        $select = 'jml_pns, jml_pjlp, jml_input, jml_verif, jml_ditolak, chart_input_APD, chart_verif_APD, jml_ops, jml_non_ops';
+        if ($this->data['jab_id'] == 20 || $this->data['jab_id'] == 21 || $this->data['jab_id'] == 22) {
+            $this->data['data_sektor'] = $data_sektor = $this->admin_model->get($select, 'master_pos', 2, [['deleted', 0], ['kode_pos', $this->data['kode_pos']] ]);
+        } else {
+            $this->data['data_sektor'] = $data_sektor = $this->admin_model->get($select, 'master_sektor', 2, [['deleted', 0], ['kode', $this->data['kode_pos']] ]);
+        }
 
-        $jumJenisApd = $this->_get_jml_jenis_apd();
-        $this->data['jmlApd'] = ($data_sektor['jml_pns']+$data_sektor['jml_pjlp']) * $jumJenisApd;
+        $jmlJenisApdOps = $this->_get_jml_jenis_apd(null, 2);
+        $jmlJenisApdNons = $this->_get_jml_jenis_apd(null, 9);
+
+        //$jumJenisApd = $this->_get_jml_jenis_apd();
+        $this->data['jmlApd'] = (($data_sektor['jml_ops']*$jmlJenisApdOps)+($data_sektor['jml_non_ops']*$jmlJenisApdNons));
         
         //$this->data['jmlPNS'] = $this->_get_users('id', 3, [['status_id', 0]], [['master_pos.kode_pos', $this->data['kode_pos'], 'after']]);
         //$this->data['jmlPJLP'] = $this->_get_users('id', 3, [['status_id', 1]], [['master_pos.kode_pos', $this->data['kode_pos'], 'after']]);
@@ -1049,12 +1018,19 @@ class Eselon_4 extends CI_Controller {
         }
         $select = 'users.id, nama, NRK, NIP, photo, users.no_telepon, email, persen_inputAPD, persen_APDterverif, users.jml_ditolak';
         $join = ['master_status', 'master_jabatan', 'master_controller'];
+
+        //cek apakah user kasi bidang penyelamat
+        if ($this->data['jab_id'] == 20 || $this->data['jab_id'] == 21 || $this->data['jab_id'] == 22) {
+            $kode = 'kode_pos';
+        } else {
+            $kode = 'kode_sektor';
+        }
         if (is_null($search)) {
-            $list_bawahan = $this->_get_users($select, 1, [['kode_sektor', $this->data['kode_pos']]], null, $or_where_arr, null, $join, ['master_controller.level', 'DESC']);
+            $list_bawahan = $this->_get_users($select, 1, [[$kode, $this->data['kode_pos']]], null, $or_where_arr, null, $join, ['master_controller.level', 'DESC']);
             $this->data['section_tittle'] = 'Menampilkan '.count($list_bawahan).' data petugas';
         } else {
             $or_like = [['users.nama', $search], ['users.NRK', $search], ['master_jabatan.nama_jabatan', $search], ['master_pos.nama_pos', $search] ];
-            $list_bawahan = $this->_get_users($select, 1, [['kode_sektor', $this->data['kode_pos']]], null, $or_where_arr, $or_like, $join, ['master_controller.level', 'DESC']);
+            $list_bawahan = $this->_get_users($select, 1, [[$kode, $this->data['kode_pos']]], null, $or_where_arr, $or_like, $join, ['master_controller.level', 'DESC']);
             $this->data['section_tittle'] = 'Hasil Pencarian kata "'.$search.'" ditemukan '.count($list_bawahan).' data';
             }
         
@@ -1089,11 +1065,18 @@ class Eselon_4 extends CI_Controller {
         $join = ['master_status', 'master_jabatan', 'master_controller'];
         $order = ['master_controller.level', 'DESC'];
         //$listUser = $this->_get_users('users.id, nama, NRK, NIP, photo', 1, [['jml_tobe_verified >', 0]], [['kode_pos', $this->data['kode_pos'], 'after']], $or_where_arr, null, $join, $order);
+        
+        //cek apakah user kasi bidang penyelamat
+        if ($this->data['jab_id'] == 20 || $this->data['jab_id'] == 21 || $this->data['jab_id'] == 22) {
+            $kode = 'kode_pos';
+        } else {
+            $kode = 'kode_sektor';
+        }
         if (is_null($search)) {
-            $listUser = $this->_get_users('users.id, nama, NRK, NIP, photo', 1, [['jml_tobe_verified >', 0], ['kode_sektor', $this->data['kode_pos']]], null, $or_where_arr, null, $join, $order);
+            $listUser = $this->_get_users('users.id, nama, NRK, NIP, photo', 1, [['jml_tobe_verified >', 0], [ $kode, $this->data['kode_pos']]], null, $or_where_arr, null, $join, $order);
         } else {
             $or_likeArr = [['users.nama', $search], ['users.NRK', $search], ['master_jabatan.nama_jabatan', $search], ['master_pos.nama_pos', $search] ];
-            $listUser = $this->_get_users('users.id, nama, NRK, NIP, photo', 1, [['jml_tobe_verified >', 0], ['kode_sektor', $this->data['kode_pos']]], null, $or_where_arr, $or_likeArr, $join, $order);
+            $listUser = $this->_get_users('users.id, nama, NRK, NIP, photo', 1, [['jml_tobe_verified >', 0], [ $kode, $this->data['kode_pos']]], null, $or_where_arr, $or_likeArr, $join, $order);
         }
         $this->data['search'] = $search;
         /*$listUser = $this->admin_model->get('id, nama, NRK, NIP, photo', 'users', 1, [['active', 1]], [['users.kode_pos', $this->data['kode_pos'], 'after']], $joinArr,
@@ -1248,11 +1231,18 @@ class Eselon_4 extends CI_Controller {
         ['users', 'master_jabatan', 'master_jabatan.nama_jabatan', 'jabatan_id', 'id_mj' ], ['master_jabatan', 'master_controller', 'master_controller.level', 'mc_id', 'id' ] ];*/
         $joinTable = ['master_status', 'master_jabatan', 'master_controller'];
         $order = ['master_controller.level', 'DESC'];
+
+        //cek apakah user kasi bidang penyelamat
+        if ($this->data['jab_id'] == 20 || $this->data['jab_id'] == 21 || $this->data['jab_id'] == 22) {
+            $kode = 'kode_pos';
+        } else {
+            $kode = 'kode_sektor';
+        }
         if (is_null($search)) {
-            $listUser = $this->_get_users('users.id, nama, NRK, NIP, photo', 1, [['persen_APDterverif >', 0], ['kode_sektor', $this->data['kode_pos']]], null, $or_where_arr, null, $joinTable, $order);
+            $listUser = $this->_get_users('users.id, nama, NRK, NIP, photo', 1, [['persen_APDterverif >', 0], [$kode, $this->data['kode_pos']]], null, $or_where_arr, null, $joinTable, $order);
         } else {
             $or_likeArr = [['users.nama', $search], ['users.NRK', $search], ['master_jabatan.nama_jabatan', $search], ['master_pos.nama_pos', $search] ];
-            $listUser = $this->_get_users('users.id, nama, NRK, NIP, photo', 1, [['persen_APDterverif >', 0], ['kode_sektor', $this->data['kode_pos']]], null, $or_where_arr, $or_likeArr, $joinTable, $order);
+            $listUser = $this->_get_users('users.id, nama, NRK, NIP, photo', 1, [['persen_APDterverif >', 0], [$kode, $this->data['kode_pos']]], null, $or_where_arr, $or_likeArr, $joinTable, $order);
         }
         $this->data['search'] = $search;
 
@@ -1302,9 +1292,14 @@ class Eselon_4 extends CI_Controller {
                                         ['apd', 'master_keberadaan', 'master_keberadaan.keberadaan', 'mkp_id', 'id_mkp' ], 
                                         ['apd', 'master_kondisi', 'master_kondisi.nama_kondisi, master_kondisi.keterangan', 'kondisi_id', 'id_mk' ]]);
         //d($userData,$listAPD, $post);
+        $joinArr2 = [['users', 'master_jabatan', 'master_jabatan.mc_id', 'jabatan_id', 'id_mj' ], 
+                        ['master_jabatan', 'master_controller', 'master_controller.role_id', 'mc_id', 'id' ] ];
+        $role_id_arr = $this->admin_model->get('users.id', 'users', 2, [['users.id', $UserID]], null, $joinArr2);
+        $user_role_id = $role_id_arr['role_id'];
+
         $this->data['icon'] = ['checkmark', 'success'];
         $this->data['UserID'] = $UserID;
-        $this->data['jumJenisApd'] = $this->_get_jml_jenis_apd();
+        $this->data['jumJenisApd'] = $this->_get_jml_jenis_apd(null, $user_role_id);
         $this->data['jumInputApd'] = $this->admin_model->get('id', 'apd', 3,  [['petugas_id', $UserID], ['progress', 2], ['mj_id !=', 0]]);
         $this->data['jumApdTerverifikasi'] = $this->admin_model->get('id', 'apd', 3,  [['petugas_id', $UserID], ['progress', 3], ['mj_id !=', 0]]);
         $this->data['jumApdDitolak'] = $this->admin_model->get('id', 'apd', 3,  [['petugas_id', $UserID], ['progress', 1], ['mj_id !=', 0]]);
@@ -1336,13 +1331,20 @@ class Eselon_4 extends CI_Controller {
         $joinArr = ['master_status', 'master_jabatan', 'master_controller'];
         $order = ['master_controller.level', 'DESC'];
         $select = 'users.id, nama, NRK, NIP, photo';
+
+        //cek apakah user kasi bidang penyelamat
+        if ($this->data['jab_id'] == 20 || $this->data['jab_id'] == 21 || $this->data['jab_id'] == 22) {
+            $kode = 'kode_pos';
+        } else {
+            $kode = 'kode_sektor';
+        }
         if (is_null($search)) {
-            $listUser = $this->_get_users($select, 1, [['users.jml_ditolak >', 0], ['kode_sektor', $this->data['kode_pos']]], null, $or_where_arr, null, $joinArr, $order);
+            $listUser = $this->_get_users($select, 1, [['users.jml_ditolak >', 0], [$kode, $this->data['kode_pos']]], null, $or_where_arr, null, $joinArr, $order);
             /*$listUser = $this->admin_model->get($select, 'users', 1, [['active', 1]], [['users.kode_pos', $this->data['kode_pos'], 'after']], $joinArr,
                                             $order, null, $or_where_arr);*/
         } else {
             $or_likeArr = [['users.nama', $search], ['users.NRK', $search], ['master_jabatan.nama_jabatan', $search], ['master_pos.nama_pos', $search] ];
-            $listUser = $this->_get_users($select, 1, [['users.jml_ditolak >', 0], ['kode_sektor', $this->data['kode_pos']]], null, $or_where_arr, $or_likeArr, $joinArr, $order);
+            $listUser = $this->_get_users($select, 1, [['users.jml_ditolak >', 0], [$kode, $this->data['kode_pos']]], null, $or_where_arr, $or_likeArr, $joinArr, $order);
             /*$listUser = $this->admin_model->get('users.id, nama, NRK, NIP, photo', 'users', 1, [['active', 1]], [['users.kode_pos', $this->data['kode_pos'], 'after']], $joinArr,
                                             $order, null, $or_where_arr, $or_likeArr);*/
         }
@@ -1388,10 +1390,15 @@ class Eselon_4 extends CI_Controller {
         $UserID = $userData['id'];
         $listAPD = $this->admin_model->get('id, mkp_id, ukuran, foto_apd, admin_message, apd.keterangan as keterangan_petugas, created_at, updated_at', 'apd', 1, [['petugas_id', $UserID], ['progress', 1], ['apd.mj_id !=', 0], ['periode_input', $this->data['periode'] ] ], null, [['apd', 'master_jenis_apd', 'master_jenis_apd.jenis_apd', 'mj_id', 'id_mj' ], ['apd', 'master_apd', 'master_apd.tahun', 'mapd_id', 'id_ma' ], ['master_apd', 'master_merk', 'master_merk.merk', 'mm_id', 'id_mm' ], ['apd', 'master_keberadaan', 'master_keberadaan.keberadaan', 'mkp_id', 'id_mkp' ], ['apd', 'master_kondisi', 'master_kondisi.nama_kondisi, master_kondisi.keterangan', 'kondisi_id', 'id_mk' ]]);
         //d($userData,$listAPD, $post);
+        $joinArr2 = [['users', 'master_jabatan', 'master_jabatan.mc_id', 'jabatan_id', 'id_mj' ], 
+                        ['master_jabatan', 'master_controller', 'master_controller.role_id', 'mc_id', 'id' ] ];
+        $role_id_arr = $this->admin_model->get('users.id', 'users', 2, [['users.id', $UserID]], null, $joinArr2);
+        $user_role_id = $role_id_arr['role_id'];
+
         $this->data['title'] = 'Daftar APD Tertolak';
         $this->data['icon'] = ['close', 'danger'];
         $this->data['UserID'] = $UserID;
-        $this->data['jumJenisApd'] = $this->_get_jml_jenis_apd();
+        $this->data['jumJenisApd'] = $this->_get_jml_jenis_apd(null, $user_role_id);
         $this->data['jumInputApd'] = $this->admin_model->get('id', 'apd', 3,  [['petugas_id', $UserID], ['progress', 2], ['mj_id !=', 0]]);
         $this->data['jumApdTerverifikasi'] = $this->admin_model->get('id', 'apd', 3,  [['petugas_id', $UserID], ['progress', 3], ['mj_id !=', 0]]);
         $this->data['jumApdDitolak'] = $this->admin_model->get('id', 'apd', 3,  [['petugas_id', $UserID], ['progress', 1], ['mj_id !=', 0]]);

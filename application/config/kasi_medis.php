@@ -2,7 +2,7 @@
 defined('BASEPATH') OR exit('No direct script access allowed');
 
 $config['id'] = 'kasi_medis';
-$config['jabID_list_monitoring'] = [107, 102, 101, 110];
+$config['jabID_list_monitoring'] = [107, 102, 101, 110, 105];
 $config['upload_path'] = 'upload/sosialisasi/barat';
 $config['thumb_upload_path'] = 'upload/sosialisasi/barat';
 $config['file_sos_map'] = 'kel_jak_barat.geojson';

@@ -23,7 +23,7 @@
             </div>
         </div>
 
-        <? //d($user_roles) ?>
+        <? //d($user_id) ?>
 
         <div class="section mt-2">
             <div class="row">

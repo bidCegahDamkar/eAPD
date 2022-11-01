@@ -367,7 +367,13 @@ class My_apd
                 $default_where = [ ['apd.mj_id', $apd_mj_id], ['mkp_id', 1], ['progress', 3], ['master_kondisi.kategori', $kondisi] ];
             }
         }
-        $result = $this->CI->my_models->get('apd.id, periode_input', 'apd', $result_type, $default_where, $default_like, $join, $orderArr, null, $or_where_arr );
+
+        if ($result_type == 3) {
+            $result = $this->CI->my_models->get('apd.id', 'apd', $result_type, $default_where, $default_like, $join, $orderArr, null, $or_where_arr );
+        } else {
+            $result = $this->CI->my_models->get('apd.id, periode_input, foto_apd', 'apd', $result_type, $default_where, $default_like, $join, $orderArr, null, $or_where_arr );
+        }
+        
         return $result;
     }
 

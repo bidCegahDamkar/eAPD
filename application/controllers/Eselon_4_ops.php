@@ -257,6 +257,7 @@ class Eselon_4_ops extends CI_Controller {
 
     public function home()
     {        
+        $this->load->helper('date');
         $this->data['pageTitle'] = 'Dashboard';
         $this->data['main_content'] = 'petugas/home';
 		$this->load->view('petugas/includes/template', $this->data);
