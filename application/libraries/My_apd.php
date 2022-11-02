@@ -337,6 +337,62 @@ class My_apd
         $join9 = ['users', 'master_pos', 'master_pos.nama_pos', 'kode_pos_id', 'id_mp' ];
         $join10 = ['apd', 'master_apd', 'master_apd.tahun', 'mapd_id', 'id_ma' ];
         $default_like = [ ['master_pos.kode_pos', $kode_pos, 'after']  ];
+        //$default_like = null;
+        $i=0;
+        foreach ($list_mc_id_bawahan as $mc_id) {
+            $or_where_arr[$i] = ['master_jabatan.mc_id', $mc_id];
+            $i++;
+        }
+        $orderArr = ["master_controller.level desc", "users.id asc"];
+        $join = [$join1, $join9, $join7, $join8, $join5, $join2, $join10, $join3, $join4];
+        if($report_type == 'all'){
+            
+            if ($apd_mj_id == 'all') {
+                $default_where = [ ['progress', 3] ];
+            }else{
+                $default_where = [ ['apd.mj_id', $apd_mj_id], ['progress', 3] ];
+            }
+        } else if (! is_null($report_type) ) {
+            //$join = [$join1, $join9, $join7, $join8];
+            $keberadaan = ($report_type == 'belum') ? 3 : 2 ;
+            if ($apd_mj_id == 'all') {
+                $default_where = [ ['mkp_id', $keberadaan], ['progress', 3] ];
+            }else{
+                $default_where = [ ['apd.mj_id', $apd_mj_id], ['mkp_id', $keberadaan], ['progress', 3] ];
+            }
+        } else {
+            //$join = [$join1, $join9, $join7, $join8, $join5];
+            if ($apd_mj_id == 'all') {
+                $default_where = [ ['mkp_id', 1], ['progress', 3], ['master_kondisi.kategori', $kondisi] ];
+            }else{
+                $default_where = [ ['apd.mj_id', $apd_mj_id], ['mkp_id', 1], ['progress', 3], ['master_kondisi.kategori', $kondisi] ];
+            }
+        }
+
+        if ($result_type == 3) {
+            $result = $this->CI->my_models->get('apd.id', 'apd', $result_type, $default_where, $default_like, $join, $orderArr, null, $or_where_arr );
+        } else {
+            $result = $this->CI->my_models->get('apd.id, periode_input, foto_apd', 'apd', $result_type, $default_where, $default_like, $join, $orderArr, null, $or_where_arr );
+        }
+        
+        return $result;
+    }
+
+    public function get_report_admin_dinas($apd_mj_id, $report_type=null, $kondisi, $group_piket=null, $kode_pos, $list_mc_id_bawahan, $result_type)
+    {
+        $select1 = 'users.nama, users.NRK, users.NIP';
+        $join1 = ['apd', 'users', $select1, 'petugas_id', 'id' ];
+        $join2 = ['apd', 'master_jenis_apd', 'master_jenis_apd.jenis_apd', 'mj_id', 'id_mj' ];
+        $join3 = ['master_apd', 'master_merk', 'master_merk.merk', 'mm_id', 'id_mm' ];
+        $join4 = ['apd', 'master_keberadaan', 'master_keberadaan.keberadaan', 'mkp_id', 'id_mkp' ];
+        $join5 = ['apd', 'master_kondisi', 'master_kondisi.nama_kondisi', 'kondisi_id', 'id_mk' ];
+        $join6 = ['apd', 'master_progress_status', 'master_progress_status.id_mps, master_progress_status.deskripsi', 'progress', 'id_mps' ];
+        $join7 = ['users', 'master_jabatan', 'master_jabatan.nama_jabatan', 'jabatan_id', 'id_mj' ];
+        $join8 = ['master_jabatan', 'master_controller', 'master_controller.level', 'mc_id', 'id' ];
+        $join9 = ['users', 'master_pos', 'master_pos.nama_pos', 'kode_pos_id', 'id_mp' ];
+        $join10 = ['apd', 'master_apd', 'master_apd.tahun', 'mapd_id', 'id_ma' ];
+        //$default_like = [ ['master_pos.kode_pos', $kode_pos, 'after']  ];
+        $default_like = null;
         $i=0;
         foreach ($list_mc_id_bawahan as $mc_id) {
             $or_where_arr[$i] = ['master_jabatan.mc_id', $mc_id];

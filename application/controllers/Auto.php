@@ -34,7 +34,8 @@ class Auto extends CI_Controller {
             }
         }
         
-        $default_where = [['active', 1], ['users.deleted', 0], ['master_jabatan.plt_id', null], ['master_jabatan.mc_id !=', 13], ['master_jabatan.mc_id !=', 16]];
+        //$default_where = [['active', 1], ['users.deleted', 0], ['master_jabatan.plt_id', null], ['master_jabatan.mc_id !=', 13], ['master_jabatan.mc_id !=', 16]];
+        $default_where = [['active', 1], ['users.deleted', 0], ['master_jabatan.plt_id', null] ];
         if (! is_null($where) && is_array($where)) {
             foreach ($where as $w) {
                 array_push($default_where, $w);

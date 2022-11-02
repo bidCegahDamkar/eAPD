@@ -26,7 +26,9 @@ class Kabid_sapras extends CI_Controller {
             'merk' => '',
             'jenis_apd' => '',
             'jenis_kondisi' => '',
-            'apd' => ''
+            'apd' => '',
+        'laporMenu' => '',
+            'lapor' => '',
     );
 
     public function __construct()
@@ -56,6 +58,7 @@ class Kabid_sapras extends CI_Controller {
         $this->data['info_periode_input'] = $state['info_periode_input'];
         $this->data['avatar'] = (! is_null($user->photo)) ? 'upload/petugas/profil/'.$user->photo : 'upload/petugas/profil/default.png' ;
         $this->data['nrk'] = $user->NRK;
+        $this->data['is_plt'] = (strpos($this->data['nrk'], 'plt-') !== false) ? true : false ;
         $this->data['password'] = $user->password;
         $this->data['user_roles'] = $this->ion_auth->get_users_groups($user->id)->result();
         $this->data['group_piket'] = $user->group_piket;
@@ -1106,7 +1109,9 @@ class Kabid_sapras extends CI_Controller {
         ['users', 'master_jabatan', 'master_jabatan.nama_jabatan', 'jabatan_id', 'id_mj' ] ];*/
         $joinTable = ['master_status', 'master_jabatan'];
         $select = 'id, nama, NRK, NIP, photo';
-        $listUser = $this->_get_users($select, 1, [['jml_tobe_verified >', 0]], null, $or_where_arr, [['master_pos.kode_wilayah', '0.', 'after'], ['master_pos.kode_wilayah', '7.', 'after']], $joinTable);
+        //$listUser = $this->_get_users($select, 1, [['jml_tobe_verified >', 0]], null, $or_where_arr, [['master_pos.kode_wilayah', '0.', 'after'], ['master_pos.kode_wilayah', '7.', 'after']], $joinTable);
+        $listUser = $this->_get_users($select, 1, [['jml_tobe_verified >', 0]], null, $or_where_arr, null, $joinTable);
+
         /*$listUser = $this->admin_model->get('id, nama, NRK, NIP, photo', 'users', 1, [['active', 1]], [['master_pos.kode_pos', $this->data['kode_pos'], 'after']], $joinArr,
                                             null, null, $or_where_arr);*/
         /*$ApdUser = [];
@@ -1163,11 +1168,11 @@ class Kabid_sapras extends CI_Controller {
         $joinTable = ['master_jabatan', 'master_status'];
         $userData = $this->_get_users('id, nama, NRK, NIP, master_pos.kode_wilayah', 2, [['id', $UserID]], null, null, null, $joinTable);
         //$userData = $this->admin_model->get('id, nama, NRK, NIP', 'users', 2, [['active', 1], ['id', $UserID]], null,  $joinArr);
-        if (is_array($userData)) {
+        /*if (is_array($userData)) {
             if( (strpos($userData['kode_wilayah'], '0.')) === false && (strpos($userData['kode_wilayah'], '7.')) === false ){
                 redirect("my404");
             }
-        }
+        }*/
         $UserID = $userData['id'];
         //get role_id user
         $joinArr2 = [['users', 'master_jabatan', 'master_jabatan.mc_id', 'jabatan_id', 'id_mj' ], 
@@ -2427,7 +2432,8 @@ class Kabid_sapras extends CI_Controller {
 
     private function _calculate_rekap_pdf()
     {
-        $jenisApd = $this->my_apd->get_list_jenis_apd('id_mj, jenis_apd, akronim', $this->data['user_roles'], 1);
+        //$jenisApd = $this->my_apd->get_list_jenis_apd('id_mj, jenis_apd, akronim', $this->data['user_roles'], 1);
+        $jenisApd = $this->_get_list_jenis_apd('id_mj, jenis_apd, akronim', null, 1, 2);
         $list_jab_id_bawahan = $this->config->item('jabID_list_monitoring');
         //$list_jab_id_bawahan[] = $this->data['jab_id'];
         foreach ($jenisApd as $apd) {
@@ -3233,7 +3239,8 @@ class Kabid_sapras extends CI_Controller {
 
     private function _calculate_rekap_APD()
     {
-        $jenisApd = $this->my_apd->get_list_jenis_apd('id_mj, jenis_apd, akronim', $this->data['user_roles'], 1);
+        //$jenisApd = $this->my_apd->get_list_jenis_apd('id_mj, jenis_apd, akronim', $this->data['user_roles'], 1);
+        $jenisApd = $this->_get_list_jenis_apd('id_mj, jenis_apd, akronim', null, 1, 2);
         $list_mc_id_bawahan = $this->config->item('report_apd');
         //$list_jab_id_bawahan[] = $this->data['jab_id'];
         $data = [];
@@ -3241,12 +3248,12 @@ class Kabid_sapras extends CI_Controller {
         foreach ($jenisApd as $apd) {
             //$akronim[] = $apd['akronim'];
             //$jenis_apd[] = $apd['jenis_apd'];
-            $temp_belum = $this->my_apd->get_report_admin_sudin($apd['id_mj'], 'belum', null, null, $this->data['kode_pos'], $list_mc_id_bawahan, 3);
-            $temp_hilang = $this->my_apd->get_report_admin_sudin($apd['id_mj'], 'hilang', null, null, $this->data['kode_pos'], $list_mc_id_bawahan, 3);
-            $temp_baik = $this->my_apd->get_report_admin_sudin($apd['id_mj'], null, 4, null, $this->data['kode_pos'], $list_mc_id_bawahan, 3);
-            $temp_rr = $this->my_apd->get_report_admin_sudin($apd['id_mj'], null, 3, null, $this->data['kode_pos'], $list_mc_id_bawahan, 3);
-            $temp_rs = $this->my_apd->get_report_admin_sudin($apd['id_mj'], null, 2, null, $this->data['kode_pos'], $list_mc_id_bawahan, 3);
-            $temp_rb = $this->my_apd->get_report_admin_sudin($apd['id_mj'], null, 1, null, $this->data['kode_pos'], $list_mc_id_bawahan, 3);
+            $temp_belum = $this->my_apd->get_report_admin_dinas($apd['id_mj'], 'belum', null, null, $this->data['kode_pos'], $list_mc_id_bawahan, 3);
+            $temp_hilang = $this->my_apd->get_report_admin_dinas($apd['id_mj'], 'hilang', null, null, $this->data['kode_pos'], $list_mc_id_bawahan, 3);
+            $temp_baik = $this->my_apd->get_report_admin_dinas($apd['id_mj'], null, 4, null, $this->data['kode_pos'], $list_mc_id_bawahan, 3);
+            $temp_rr = $this->my_apd->get_report_admin_dinas($apd['id_mj'], null, 3, null, $this->data['kode_pos'], $list_mc_id_bawahan, 3);
+            $temp_rs = $this->my_apd->get_report_admin_dinas($apd['id_mj'], null, 2, null, $this->data['kode_pos'], $list_mc_id_bawahan, 3);
+            $temp_rb = $this->my_apd->get_report_admin_dinas($apd['id_mj'], null, 1, null, $this->data['kode_pos'], $list_mc_id_bawahan, 3);
             $temp_stot = $temp_belum+$temp_hilang+$temp_baik+$temp_rr+$temp_rs+$temp_rb;
             $stotbelum += $temp_belum;
             $stothilang += $temp_hilang;
@@ -3315,19 +3322,19 @@ class Kabid_sapras extends CI_Controller {
 
         if ($id_mj > 0 && $id_mj <= $this->_get_jml_jenis_apd()) {
             if ($tipe == 'kondisi') {
-                $result = $this->my_apd->get_report_admin_sudin($id_mj, null, $par, null, $this->data['kode_pos'], $list_mc_id_bawahan, 1);
+                $result = $this->my_apd->get_report_admin_dinas($id_mj, null, $par, null, $this->data['kode_pos'], $list_mc_id_bawahan, 1);
             } else if ($tipe == 'keberadaan') {
-                $result = $this->my_apd->get_report_admin_sudin($id_mj, $par, null, null, $this->data['kode_pos'], $list_mc_id_bawahan, 1);
+                $result = $this->my_apd->get_report_admin_dinas($id_mj, $par, null, null, $this->data['kode_pos'], $list_mc_id_bawahan, 1);
             } else {
-                $result = $this->my_apd->get_report_admin_sudin($id_mj, 'all', null, null, $this->data['kode_pos'], $list_mc_id_bawahan, 1);
+                $result = $this->my_apd->get_report_admin_dinas($id_mj, 'all', null, null, $this->data['kode_pos'], $list_mc_id_bawahan, 1);
             }
         } else {
             if ($tipe == 'kondisi') {
-                $result = $this->my_apd->get_report_admin_sudin('all', null, $par, null, $this->data['kode_pos'], $list_mc_id_bawahan, 1);
+                $result = $this->my_apd->get_report_admin_dinas('all', null, $par, null, $this->data['kode_pos'], $list_mc_id_bawahan, 1);
             } else if ($tipe == 'keberadaan') {
-                $result = $this->my_apd->get_report_admin_sudin('all', $par, null, null, $this->data['kode_pos'], $list_mc_id_bawahan, 1);
+                $result = $this->my_apd->get_report_admin_dinas('all', $par, null, null, $this->data['kode_pos'], $list_mc_id_bawahan, 1);
             } else {
-                $result = $this->my_apd->get_report_admin_sudin('all', 'all', null, null, $this->data['kode_pos'], $list_mc_id_bawahan, 1);
+                $result = $this->my_apd->get_report_admin_dinas('all', 'all', null, null, $this->data['kode_pos'], $list_mc_id_bawahan, 1);
             }
         }
         
@@ -3349,7 +3356,8 @@ class Kabid_sapras extends CI_Controller {
 		$this->data['active'] = $active;
 
         $this->data['listSektor'] = $this->admin_model->get('kode, sektor', 'master_sektor', 1, null, [['kode', $this->data['kode_pos'], 'after']] );
-        $this->data['listJenisAPD'] = $this->my_apd->get_list_jenis_apd('id_mj, jenis_apd, akronim', $this->data['user_roles'], 1);
+        //$this->data['listJenisAPD'] = $this->my_apd->get_list_jenis_apd('id_mj, jenis_apd, akronim', $this->data['user_roles'], 1);
+        $this->data['listJenisAPD'] = $this->_get_list_jenis_apd('id_mj, jenis_apd, akronim', null, 1, 2);
 
         $this->data['datatable'] = true;
         $this->data['select2'] = true;
@@ -3390,11 +3398,13 @@ class Kabid_sapras extends CI_Controller {
         foreach ($jab_id_arr as $jab_id) {
             $or_where_arr[] = ['master_jabatan.mc_id', $jab_id];
         }
-
+        
         if ($id_mj == 'all') {
-            $listJenisAPD = $this->my_apd->get_list_jenis_apd('id_mj, jenis_apd, akronim', $this->data['user_roles'], 1);
+            //$listJenisAPD = $this->my_apd->get_list_jenis_apd('id_mj, jenis_apd, akronim', $this->data['user_roles'], 1);
+            $listJenisAPD = $this->_get_list_jenis_apd('id_mj, jenis_apd, akronim', null, 1, 2);
         } else {
-            $listJenisAPD = $this->my_apd->get_list_jenis_apd('id_mj, jenis_apd, akronim', $this->data['user_roles'], 1, [['id_mj', $id_mj]]);
+            //$listJenisAPD = $this->my_apd->get_list_jenis_apd('id_mj, jenis_apd, akronim', $this->data['user_roles'], 1, [['id_mj', $id_mj]]);
+            $listJenisAPD = $this->_get_list_jenis_apd('id_mj, jenis_apd, akronim', [['id_mj', $id_mj]], 1, 2);
         }
 
         if ($id_pos == 'all' && $kode_sektor == 'all') {
@@ -4549,5 +4559,263 @@ class Kabid_sapras extends CI_Controller {
         exit();
     }
 
+    public function lapor()
+    {
+        if (! $this->data['is_open'] || $this->data['is_plt']) {
+            redirect("my404");
+        }
+        
+        $this->data['pageTitle'] = 'Lapor APD';
+
+        //get my role_id
+        $joinArr2 = [['users', 'master_jabatan', 'master_jabatan.mc_id', 'jabatan_id', 'id_mj' ], 
+                        ['master_jabatan', 'master_controller', 'master_controller.role_id', 'mc_id', 'id' ] ];
+        $role_id_arr = $this->admin_model->get('users.id', 'users', 2, [['users.id', $this->data['user_id']]], null, $joinArr2);
+        $my_role_id = $role_id_arr['role_id'];
+
+        $jenisApd = $this->_get_list_jenis_apd('id_mj, jenis_apd, picture', null, 1, $my_role_id);
+        $this->data['numJenisApd'] = count($jenisApd);
+        $i = 0;
+        foreach ($jenisApd as $apd) {
+            //$dataAPD = $this->_get_apds('progress', 2, [['master_apd.mj_id', $apd['id_mj']],['petugas_id', $this->data['user_id']],['periode_input', $this->data['periode']]], null, null, null, ['master_progress_status']);
+            $dataAPD = $this->my_apd->get_apd('progress', $apd['id_mj'], $this->data['user_id']);
+            if (is_array($dataAPD)) {
+                $statusArr = $this->petugas_model->get('button', 'master_progress_status', [['id_mps', $dataAPD['progress']]], null, 2);
+                $buttonProp = json_decode($statusArr['button']);
+                $is_finish = ($dataAPD['progress'] > 1) ? true : false ;
+                //if($is_finish){$progress++;}
+            } else {
+                $is_finish = false;
+                $statusArr = $this->petugas_model->get('button', 'master_progress_status', [['id_mps', 0]], null, 2);
+                $buttonProp = json_decode($statusArr['button']); 
+            }
+            $jenisApd[$i]['is_finish'] = $is_finish;
+            $jenisApd[$i]['buttonProp'] = $buttonProp;
+            $i++;
+        }
+        //$persenProgress = $progress/$this->data['numJenisApd']*100;
+        $this->data['jenisApd'] = $jenisApd;
+        $data_rekap = $this->_get_users('jml_input_APD, persen_inputAPD, persen_APDterverif, users.jml_ditolak', 2, [['id', $this->data['user_id']]]);
+        $jml_terverif = round(($data_rekap['persen_APDterverif']/100)*$this->data['numJenisApd'], 0 );
+        //$this->data['progress'] = $this->my_apd->count_progress($this->data['user_id'], $this->data['user_roles']);
+        $this->data['progress'] = array($this->data['numJenisApd'], $data_rekap['jml_input_APD'], $jml_terverif, $data_rekap['jml_ditolak'] );
+        //$this->data['persenProgress'] = $persenProgress;
+        $this->data['buttonProp'] = $buttonProp;
+        
+        $active = $this->active;
+		$active['laporMenu'] = 'active-page';
+        $active['lapor'] = 'active';
+		$this->data['active'] = $active;
+
+        $this->data['main_content'] = 'admin_dinas/lapor';
+		$this->load->view('admin_dinas/includes/template', $this->data);
+        //$this->load->view('petugas/lapor', $this->data);
+    }
+
+
+    public function laporAPD()
+    {
+        if (! $this->data['is_open'] || $this->data['is_plt']) {
+            redirect("my404");
+        }
+        $id_mj = $this->uri->segment(3);
+        $jenisApd = $this->_get_list_jenis_apd('id_mj, jenis_apd, mtu_id', [['id_mj', $id_mj]], 2);
+        if (! is_array($jenisApd) )  {
+            redirect("my404");
+        }
+        $id_mj = $jenisApd['id_mj'];
+        //$dataAPD = $this->petugas_model->get('*', 'apd', [['mj_id', $id_mj],['petugas_id', $this->data['user_id']],['periode_input', $this->data['periode']]], null, 2);
+        //$dataAPD = $this->_get_apds('*', 2, [['master_apd.mj_id', $id_mj],['petugas_id', $this->data['user_id']]], null, null, null, ['master_progress_status']);
+        $dataAPD = $this->my_apd->get_apd('*', $id_mj, $this->data['user_id']);
+        //cek apakah sudah ada data ini
+        if (is_array($dataAPD) )
+        {
+            //sudah ada maka cek apakah masih boleh edit
+            if ($dataAPD['progress'] > 2) {
+                redirect("my404");
+            }
+            $noData = false;
+        }else
+        {
+            $noData = true;
+        }
+        
+        $this->load->helper('date');
+        //upload foto apd user
+        $this->load->library('upload');
+		$upload_APD_path = 'upload/petugas/APD/';
+		$config['upload_path']          = FCPATH.$upload_APD_path;
+		$config['allowed_types']        = 'gif|jpg|png|jpeg';
+		$config['max_size']             = 5000;
+		$config['remove_spaces']		= TRUE;  //it will remove all spaces
+        // if its editing then use rewrite mode
+        if(! $noData){
+            $config['overwrite']        = true;
+        }
+		$this->upload->initialize($config);
+        if ($this->input->server('REQUEST_METHOD') === 'POST')
+		{
+            //form validation
+            $this->form_validation->set_rules('mkp_id', 'mkp_id', 'required');
+            $mkp_id = isZonk($this->input->post('mkp_id'));
+            if($mkp_id != '3')
+            {
+                $this->form_validation->set_rules('mapd_id', 'mapd_id', 'required');
+                $this->form_validation->set_rules('kondisi_id', 'kondisi_id', 'required');
+			    $this->form_validation->set_rules('ukuran', 'ukuran', 'required');
+            }
+			$this->form_validation->set_error_delimiters('<div class="alert alert-error"><a class="close" data-dismiss="alert">×</a><strong>', '</strong></div>');
+            // check agreement checkbox
+            if(is_array($this->input->post('myCheckbox')))
+            {
+                $aggreement = ($this->input->post('myCheckbox')[0] == 'on') ? true : false ;
+            }else{
+                $aggreement = false;
+            }
+            //set progress status
+            $progress = 2;
+			//if the form has passed through the validation
+			if ($this->form_validation->run() && $aggreement)
+			{
+				$my_time = date("Y-m-d H:i:s", now('Asia/Jakarta'));
+				$data_basic = array(
+                    'mj_id' => $id_mj,
+					'mkp_id' => $mkp_id,
+					'petugas_id' => $this->data['user_id'],
+                    'periode_input' => $this->data['periode'],
+                    'progress' => $progress
+				);
+                if ($mkp_id == '1' || $mkp_id == '2') {
+                    $data_add = array(
+                        'mapd_id' => isZonk($this->input->post('mapd_id')),
+                        'kondisi_id' => isZonk($this->input->post('kondisi_id')),
+                        'ukuran' => isZonk($this->input->post('ukuran')),
+                        'keterangan' => isZonk($this->input->post('keterangan'))
+                    );
+                } else {
+                    $data_add = array(
+                        'mapd_id' => null,
+                        'kondisi_id' => null,
+                        'ukuran' => null,
+                        'keterangan' => null,
+                        'foto_apd' => null
+                    );
+                }
+                $data_to_store = array_merge($data_basic, $data_add);
+
+                if ($noData) {
+                    $data_to_store['created_at'] = $my_time;
+                } else {
+                    $data_to_store['updated_at'] = $my_time;
+                }
+                
+                if (! empty($this->input->post('no_urut'))) {
+                    $data_to_store['no_urut'] = $this->input->post('no_urut');
+                }
+                
+				//set upload foto
+				if( $this->upload->do_upload('foto_apd'))
+				{
+					$upload_data = $this->upload->data();
+					$raw = $upload_data['raw_name'];
+					$file_type = $upload_data['file_ext'];
+					$data_to_store['foto_apd'] = $raw.$file_type;
+                    //$this->resizeImage($data_to_store['foto_apd'], $upload_APD_path, false);  // resize image
+                    //$this->resizeImage($data_to_store['foto_apd'], $upload_APD_path, true);  //create thumb
+				}
+
+                //upload foto jika keberadaan ada
+                /*if($mkp_id == '1')
+                {
+                    $image = $_POST['image'];
+                    if (!empty($image)) {
+                        $type = $this->_get_mimes($image);
+                        $name = $this->data['nrk'].'_'.rand(0, 10000);
+                        $img_name = $name.'.'.$type;
+                        $data_to_store['foto_apd'] = $img_name;
+                        file_put_contents($upload_APD_path.$img_name, file_get_contents($image));
+                    }
+                }*/
+
+                // check wheather its new data or editing data
+                if ($noData) {
+                    //if the insert has returned true then we show the flash message
+                    if($this->petugas_model->insertData('apd', $data_to_store)){
+                        $this->session->set_flashdata('flash_message', 'sukses');
+                    }else{
+                        $this->session->set_flashdata('flash_message', 'gagal');
+                    }
+                } else {
+                    if($this->petugas_model->updateData('apd', ['id', $dataAPD['id']], $data_to_store)){
+                        $this->session->set_flashdata('flash_message', 'sukses');
+                    }else{
+                        $this->session->set_flashdata('flash_message', 'gagal');
+                    }
+                }
+                //update data users.persen input apd
+                $this->_update_user_rekap($this->data['user_id']);
+
+				//redirect('Prainspeksi_gedung/update/'.$id.'');
+				redirect(''.$this->data['controller'].'/lapor');
+			}//validation run
+        }
+
+        $masterAPD = $this->petugas_model->get_masterAPD_groupbyjenis($id_mj);
+        $listKeberadaan = $this->petugas_model->get('*', 'master_keberadaan', null, null, 1);
+        $listKondisi = $this->petugas_model->get_masterKondisi_groupbyjenis($id_mj);
+        $listUkuran = $this->petugas_model->get('id_mtu, daftar_ukuran', 'master_tipe_ukuran', [['id_mtu', $jenisApd['mtu_id']]], null, 2);
+        
+        $this->data['post'] = $this->input->post();
+        $this->data['masterAPD'] = $masterAPD;
+        $this->data['listKeberadaan'] = $listKeberadaan;
+        $this->data['listKondisi'] = $listKondisi;
+        $this->data['listUkuran'] = $listUkuran;
+        $this->data['thead'] = array(
+			'Merk & Tahun<a class="text-danger">*</a>','Keberadaan<a class="text-danger">*</a>', 'Kondisi<a class="text-danger">*</a>', 'Ukuran<a class="text-danger">*</a>' , 'Keterangan'
+		);
+		$this->data['dhead'] = array(
+			'mapd_id', 'mkp_id', 'kondisi_id', 'ukuran', 'keterangan'
+		);
+
+
+        //d($jenisApd);
+        //d($dataAPD);
+        $pageTitle = 'Lapor '.$jenisApd['jenis_apd'];
+        if (strlen($pageTitle) >= 35) {
+            //$pageTitle = substr($pageTitle, 0, 10). " ... " . substr($pageTitle, -5);
+            $pageTitle = substr($pageTitle, 0, 12). " ... ";
+        }
+
+        $active = $this->active;
+		$active['laporMenu'] = 'active-page';
+        $active['lapor'] = 'active';
+		$this->data['active'] = $active;
+        
+        $this->data['laporAPD'] = true;
+        $this->data['pageTitle'] = $pageTitle;
+        $this->data['jenisApd'] = $jenisApd;
+        $this->data['dataAPD'] = $dataAPD;
+        if ($noData) {
+            $this->data['main_content'] = 'admin_dinas/laporAPD';
+        } else {
+            $this->data['main_content'] = 'admin_dinas/editAPD';
+        }
+        
+		$this->load->view('admin_dinas/includes/template', $this->data);
+        //$this->load->view('petugas/editAPD', $this->data);
+    }
+
+    public function get_img_apd_ajax()
+	{
+		$id=$_GET['loadId'];
+        //$nrk = $this->input->get('loadId');
+		//$loadId=$_POST['loadId'];
+		//$this->load->model('model');
+        
+        $data_pos = $this->petugas_model->get('foto_mapd, no_seri', 'master_apd', [['id_ma', $id] ], null, 2);
+        
+        echo json_encode($data_pos);
+        exit();
+	}
     
 }

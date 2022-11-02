@@ -99,6 +99,15 @@
         }
         ?>
 
+        <!-- Lapor APD -->
+        <?php
+        if(isset($laporAPD)){
+            echo '
+                <script src="'.base_url().'assets/admin_sudin/newLaporAPDver1.js"></script>
+            ';
+        }
+        ?>
+
         <!-- toast notifikasi -->
         <?php
         $color = $info_message = '';

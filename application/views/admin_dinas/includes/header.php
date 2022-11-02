@@ -49,6 +49,16 @@ defined('BASEPATH') OR exit('No direct script access allowed');
       $user_id_plt = (isset($data_jabatan['plt_id'])) ? $data_jabatan['plt_id'] : '' ;
       ?>
 
+      <?php
+      if ($this->uri->segment(2) == 'laporAPD') {
+          if(! isset($dataAPD['foto_apd'])) {
+              echo '<script>var req = true;</script>';
+          }else{
+              echo '<script>var req = false;</script>';
+          }
+      }
+      ?>
+
       <!-- set global variable-->
       <script>var base_url = '<?php echo base_url(); ?>';</script>
       <script>var controller = '<?php echo $controller; ?>';</script>
@@ -182,6 +192,13 @@ defined('BASEPATH') OR exit('No direct script access allowed');
           <ul class="list-unstyled accordion-menu">
             <li class="<? echo $active['homeMenu']; ?>">
               <a href="<?php echo base_url().$controller; ?>/home"><i data-feather="home"></i>Dashboard</a>
+            </li>
+            <li class="<? echo $active['laporMenu']; ?>">
+              <a href="#"><i data-feather="book"></i>Lapor APD<i class="fas fa-chevron-right dropdown-icon"></i></a>
+              <ul>
+                <li ><a class="<? echo $active['lapor']; ?>" href="<?php echo base_url().$controller; ?>/lapor"><i class="far fa-circle"></i>Lapor</a></li>
+                <!-- <li><a class="<? //echo $active['sewaktu']; ?>" href="<?php //echo base_url().$controller; ?>/home"><i class="far fa-circle"></i>Laporan Sewaktu-waktu</a></li> -->
+              </ul>
             </li>
             <li class="<? echo $active['verifikasiMenu']; ?>">
               <a href="#"><i data-feather="inbox"></i>Verifikasi & Validasi<i class="fas fa-chevron-right dropdown-icon"></i></a>
